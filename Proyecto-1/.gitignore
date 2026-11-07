@@ -1,0 +1,51 @@
+# --- SISTEMA OPERATIVO ---
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+Ehthumbs.db
+Desktop.ini
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+
+# --- ENTORNOS DE DESARROLLO (IDEs) ---
+# Visual Studio Code
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# IntelliJ / WebStorm / PyCharm
+.idea/
+*.iml
+
+# --- DEPENDENCIAS Y PAQUETES ---
+node_modules/
+jspm_packages/
+.pnp/
+.pnp.js
+
+# --- ARCHIVOS DE CONFIGURACIÓN Y SECRETOS ---
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.pem
+*.key
+
+# --- COMPILACIÓN Y PRODUCCIÓN ---
+dist/
+build/
+out/
+*.log
+
+cp_calles/
+.venv/

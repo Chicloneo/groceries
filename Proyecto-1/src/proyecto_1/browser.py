@@ -30,6 +30,7 @@ def introducir_CP(page, cp:str=CP):
     except TimeoutError as te:
         print(f"Error de conexión: {te}")
 
+    page = wait_images(page)
     print(f"Hemos entrado a la tienda de Mercadona: {page.url} con el CP: {cp}")
     page.screenshot(path="Screenshots/2_tienda.png")
 
@@ -40,7 +41,7 @@ def introducir_CP(page, cp:str=CP):
 def wait_images(page):
 
     # Esperamos a  que las imágenes se carguen. Nos desplazamos por la página. 
-    # Hay que parecer lo más humano posible.
+    # Hay que parecer lo más humano posible. También para hacer buenas screenshots
     # Código con IA
     page.evaluate("""
         async () => {

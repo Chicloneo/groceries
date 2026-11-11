@@ -69,7 +69,7 @@ def entrar_cp(page, cp):
         const body = document.body?.innerText.toLowerCase() || '';
         return u.includes('tienda.mercadona.es') || u.includes('telecompra') ||
                body.includes('el código postal no es correcto');
-    }""", timeout=5000)
+    }""", timeout=TIMEOUT)
     if page.get_by_text("El código postal no es correcto.", exact=True).count():
         return "INVALIDO"
     if "telecompra" in page.url.lower():
@@ -157,7 +157,8 @@ def precio_normalizado(precio):
     return "".join(str(precio).lower().replace("€", "").split()).replace(",", ".")
 
 
-def obtener_productos_subcategoria(page, cp, categoria, subcategoria, referencia=None):
+def obtener_productos_subcategoria(page, cp, categoria, subcategoria, referencia=None, existentes=None):
+    existentes = existentes if existentes is not None else set()
     print(f"      Abriendo subcategoría: {subcategoria}", flush=True)
     page.get_by_role("button", name=subcategoria, exact=True).click()
     page.locator("[data-testid='product-cell']").first.wait_for(state="visible", timeout=TIMEOUT)
@@ -172,26 +173,34 @@ def obtener_productos_subcategoria(page, cp, categoria, subcategoria, referencia
     for i in range(total):
         print(f"        Producto {i + 1}/{total}", flush=True)
         card = cards.nth(i)
-        name = card.get_by_test_id("product-cell-name").inner_text().strip()
+        name = card.get_by_test_id("product-cell-name").inner_text(timeout=DETAIL_TIMEOUT).strip()
         card_format = " ".join(x.strip() for x in card.locator(
             ".product-format__size--cell span[aria-hidden='true']").all_inner_texts() if x.strip())
-        card_price = card.locator(".product-price__unit-price").inner_text().strip()
+        card_price = card.locator(".product-price__unit-price").inner_text(timeout=DETAIL_TIMEOUT).strip()
         key = clave_producto(categoria, subcategoria, name, card_format)
-        ref = referencia.get(key) if referencia is not None else None
+        row_key = (cp, *key)
+        if row_key in existentes:
+            print(f"        Producto {i + 1}/{total}: ya está en CSV; se omite", flush=True)
+            continue
+        candidatas = referencia.get(key, []) if referencia is not None else []
+        ref = next((fila_ref for fila_ref in candidatas
+                    if precio_normalizado(card_price) == precio_normalizado(fila_ref["precio_unidad"])), None)
         # En CP no referencia, si nombre+formato y precio coinciden, copiamos
         # la fila de referencia cambiando solo el CP; evitamos abrir el detalle.
-        if ref and precio_normalizado(card_price) == precio_normalizado(ref["precio_unidad"]):
+        if ref:
             fila = dict(ref)
             fila["cp"] = cp
             rows.append(fila)
+            append_rows([fila])
+            existentes.add(row_key)
             print(f"        Producto {i + 1}/{total}: coincide con referencia; detalle omitido", flush=True)
             continue
-        if ref:
+        if candidatas and not ref:
             print(f"        Producto {i + 1}/{total}: precio distinto; abriendo ficha", flush=True)
-        elif referencia is not None:
+        elif referencia is not None and not candidatas:
             print(f"        Producto {i + 1}/{total}: nuevo en este CP; abriendo ficha", flush=True)
         button = card.get_by_test_id("open-product-detail")
-        button.click()
+        button.click(timeout=DETAIL_TIMEOUT)
         info = page.get_by_test_id("private-product-detail-info")
         try:
             info.wait_for(state="visible", timeout=DETAIL_TIMEOUT)
@@ -207,14 +216,17 @@ def obtener_productos_subcategoria(page, cp, categoria, subcategoria, referencia
             ".product-format span[aria-hidden='true']").all_inner_texts() if x.strip())
         # Puede haber precio anterior y precio rebajado, ambos con el mismo
         # test id. El precio vigente usa esta clase en el HTML de la ficha.
-        price = info.locator(".product-price__unit-price").inner_text().strip()
+        price = info.locator(".product-price__unit-price").inner_text(timeout=DETAIL_TIMEOUT).strip()
         fila = {"cp": cp, "categoria": categoria, "subcategoria": subcategoria,
-                     "nombre": info.locator("h1").inner_text().strip() or name,
+                     "nombre": info.locator("h1").inner_text(timeout=DETAIL_TIMEOUT).strip() or name,
                      "formato_y_precio_por_kilo": fmt, "precio_unidad": price}
         rows.append(fila)
+        append_rows([fila])
+        existentes.add((cp, *clave_producto(categoria, subcategoria, fila["nombre"], card_format or fmt)))
         if referencia is not None:
-            referencia[clave_producto(categoria, subcategoria, fila["nombre"], card_format or fmt)] = fila
-        page.get_by_test_id("modal-close-button").click()
+            ref_key = clave_producto(categoria, subcategoria, fila["nombre"], card_format or fmt)
+            referencia.setdefault(ref_key, []).append(fila)
+        page.get_by_test_id("modal-close-button").click(timeout=DETAIL_TIMEOUT)
         info.wait_for(state="detached", timeout=TIMEOUT)
     return rows
 
@@ -232,19 +244,27 @@ def main(lista_codigos_postales=LISTA_CODIGOS_POSTALES):
         codigos.remove(CP_REFERENCIA)
     codigos.insert(0, CP_REFERENCIA)
     referencia = {}
+    existentes = set()
     if CSV_SALIDA.exists():
         with CSV_SALIDA.open("r", newline="", encoding="utf-8-sig") as f:
             for fila in csv.DictReader(f):
-                if fila.get("cp") == CP_REFERENCIA:
-                    referencia[clave_producto(fila["categoria"], fila["subcategoria"], fila["nombre"], fila["formato_y_precio_por_kilo"])] = fila
+                k = clave_producto(fila["categoria"], fila["subcategoria"], fila["nombre"], fila["formato_y_precio_por_kilo"])
+                existentes.add((fila["cp"], *k))
+                referencia.setdefault(k, []).append(fila)
     total_cp = len(codigos)
     print(f"Inicio de extracción: {total_cp} códigos postales; "
           f"{len(completados)} tareas ya constan en el checkpoint.", flush=True)
     with sync_playwright() as p:
         browser = p.chromium.launch()
         page = browser.new_page()
+        page.set_default_timeout(TIMEOUT)
+        page.set_default_navigation_timeout(TIMEOUT)
         try:
             for pos_cp, cp in enumerate(codigos, start=1):
+                if (f"{cp}:COMPLETO" in completados or f"{cp}:INVALIDO" in completados
+                        or f"{cp}:SIN_SERVICIO" in completados):
+                    print(f"[{pos_cp}/{total_cp}] CP {cp}: ya comprobado; se omite.", flush=True)
+                    continue
                 print(f"\n[{pos_cp}/{total_cp}] CP {cp}: iniciando", flush=True)
                 try:
                     estado_cp = entrar_cp(page, cp)
@@ -264,6 +284,9 @@ def main(lista_codigos_postales=LISTA_CODIGOS_POSTALES):
                         print(f"  Categoría {pos_cat}/{len(cats)}: {cat}", flush=True)
                         try:
                             subs = abrir_categoria(page, cat)
+                            if subs and all(f"{cp}:{cat}:{sub}" in completados for sub in subs):
+                                print(f"    Categoría ya completada; se omite: {cat}", flush=True)
+                                continue
                             if not subs:
                                 # No se inventan subcategorías ni se marca como completado.
                                 logging.warning("CP=%s categoría sin subcategorías visibles: %s", cp, cat)
@@ -275,23 +298,20 @@ def main(lista_codigos_postales=LISTA_CODIGOS_POSTALES):
                                 try:
                                     rows = obtener_productos_subcategoria(
                                         page, cp, cat, sub,
-                                        referencia=None if cp == CP_REFERENCIA else referencia,
+                                        referencia=referencia,
+                                        existentes=existentes,
                                     )
-                                    append_rows(rows)
-                                    if cp == CP_REFERENCIA:
-                                        for fila in rows:
-                                            referencia[clave_producto(fila["categoria"], fila["subcategoria"], fila["nombre"], fila["formato_y_precio_por_kilo"])] = fila
                                     completados.add(key)
                                     guardar_estado(completados)
-                                    print(f"      Guardados {len(rows)} productos. CSV actualizado.", flush=True)
+                                    print(f"      Procesados {len(rows)} productos; CSV actualizado por producto.", flush=True)
                                 except Exception:
                                     print(f"      ERROR en {cp} / {cat} / {sub}; detalle en {LOG}", flush=True)
                                     logging.exception("Falló CP=%s categoría=%s subcategoría=%s", cp, cat, sub)
                                     close_modal = page.get_by_test_id("modal-close-button")
                                     if close_modal.count():
-                                        close_modal.click(timeout=5000)
+                                        close_modal.click(timeout=TIMEOUT)
                                         page.get_by_test_id("private-product-detail-info").wait_for(
-                                            state="detached", timeout=5000
+                                            state="detached", timeout=TIMEOUT
                                         )
                                 # Volver al índice de categorías y abrir el siguiente item.
                                 page.get_by_role("link", name="Categorías").click()
@@ -314,7 +334,11 @@ def main(lista_codigos_postales=LISTA_CODIGOS_POSTALES):
                     print(f"[{pos_cp}/{total_cp}] ERROR en CP {cp}; detalle en {LOG}", flush=True)
                     logging.exception("Falló CP=%s", cp)
         finally:
-            browser.close()
+            try:
+                browser.close()
+            except Exception as close_error:
+                # Ctrl+C puede haber cerrado antes el driver de Playwright.
+                logging.info("Cierre de browser tras interrupción: %s", close_error)
             print(f"Proceso finalizado. CSV: {CSV_SALIDA.resolve()} | progreso: {ESTADO.resolve()} | errores: {LOG.resolve()}", flush=True)
 
 

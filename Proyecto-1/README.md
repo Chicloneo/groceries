@@ -40,6 +40,7 @@ tests/
   test_validator.py
   test_metrics.py
   test_cli.py
+  test_integration.py
 ```
 
 Los demás CSV existentes se mantienen en sus ubicaciones actuales. `Data/aux.csv`
@@ -49,11 +50,17 @@ es la entrada de referencia para Cabo de Palos, Murcia (CP `30370`).
 
 ```bash
 uv run --no-sync pytest -q
+uv run --no-sync pytest -q -m "not integration"
+uv run --no-sync pytest -q -m integration
 ```
 
 ## CI
 
 Workflow: [`../.github/workflows/ci.yml`](../.github/workflows/ci.yml)
+
+![Estado de CI](https://github.com/Chicloneo/groceries/actions/workflows/ci.yml/badge.svg)
+
+[Ver ejecuciones de GitHub Actions](https://github.com/Chicloneo/groceries/actions/workflows/ci.yml).
 
 ```bash
 pytest -q \

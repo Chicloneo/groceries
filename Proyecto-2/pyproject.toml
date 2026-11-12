@@ -1,0 +1,33 @@
+[project]
+name = "proyecto-2"
+version = "0.1.0"
+description = "Clasificación de categorías para nuevos productos, ampliando Proyecto 1"
+readme = "README.md"
+authors = [
+    { name = "Santiago Lillo Macías", email = "santilillomacias@gmail.com" }
+]
+requires-python = ">=3.14"
+dependencies = [
+    "joblib>=1.6.0",
+    "pandas>=3.1.1",
+    "scikit-learn>=1.9.1",
+]
+
+[project.scripts]
+proyecto-2 = "proyecto_2.cli:main"
+
+[build-system]
+requires = ["uv_build>=0.13.7,<0.14.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.2.0",
+    "pytest-cov>=7.1.0",
+]
+notebooks = [
+    "ipykernel>=6.30",
+    "jupyterlab>=4.4",
+    "matplotlib>=3.10",
+    "nbclient>=0.10",
+]

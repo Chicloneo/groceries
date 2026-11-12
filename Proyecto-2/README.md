@@ -44,8 +44,8 @@ uv sync --group notebooks    # añade Jupyter, matplotlib y nbclient
 uv run pytest -q
 ```
 
-`uv.lock` fija las versiones resueltas; `requirements.txt` es la exportación
-para herramientas de instalación basadas en pip.
+`pyproject.toml` declara las dependencias y `uv.lock` fija las versiones
+resueltas; no hay `requirements.txt`.
 
 ## Script de consola
 
@@ -99,7 +99,6 @@ uv run --group notebooks jupyter lab
 Proyecto-2/
   pyproject.toml
   uv.lock
-  requirements.txt
   scripts/
     classify_products.py       # envoltorio de consola
   src/proyecto_2/

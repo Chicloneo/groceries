@@ -24,6 +24,17 @@ proyecto elimina esas repeticiones y trabaja con 3.571 nombres únicos. Si un
 mismo nombre tiene etiquetas distintas, conserva la combinación de categoría
 y subcategoría más frecuente.
 
+Por ejemplo, estas filas aparecen en el CSV:
+
+| Nombre | Categoría | Subcategoría |
+| --- | --- | --- |
+| Aceite de oliva 0,4º Hacendado | Aceite, especias y salsas | Aceite, vinagre y sal |
+| Aceite de oliva virgen extra Hacendado | Aceite, especias y salsas | Aceite, vinagre y sal |
+| Aceite de oliva virgen extra Hacendado Gran Selección | Aceite, especias y salsas | Aceite, vinagre y sal |
+
+El primer nombre aparece con más de un formato y precio. Como el modelo usa el
+nombre, esas filas se reducen a un solo producto antes del entrenamiento.
+
 ## Qué es TF-IDF
 
 TF-IDF convierte texto en valores numéricos que un modelo puede utilizar. La
@@ -37,15 +48,42 @@ Por ejemplo, «leche» puede aparecer en muchos productos y, por sí sola, aport
 poca información para distinguirlos. En cambio, una palabra menos común como
 «deslactosada» puede ayudar a identificar un tipo concreto de producto.
 
-De forma simplificada, el peso de un término se expresa así:
+Sea \(f_{t,d}\) el número de veces que aparece el término \(t\) en el producto
+\(d\), \(N\) el número de productos de entrenamiento y \(\operatorname{df}(t)\)
+el número de productos que contienen \(t\). Con la frecuencia TF logarítmica
+utilizada en este proyecto:
 
-```text
-TF-IDF(término, producto) = TF(término, producto) × IDF(término)
-```
+$$
+\operatorname{tf}(t,d) =
+\begin{cases}
+1 + \log(f_{t,d}), & f_{t,d} > 0, \\
+0, & f_{t,d} = 0.
+\end{cases}
+$$
 
-En scikit-learn, el cálculo también suaviza el IDF y normaliza los vectores.
-En este proyecto se suaviza el efecto de términos repetidos mediante una
-frecuencia TF logarítmica.
+El IDF suavizado que aplica scikit-learn es:
+
+$$
+\operatorname{idf}(t) =
+\log\left(\frac{1 + N}{1 + \operatorname{df}(t)}\right) + 1.
+$$
+
+El peso TF-IDF se obtiene multiplicando ambos valores:
+
+$$
+\operatorname{tfidf}(t,d) =
+\operatorname{tf}(t,d)\,\operatorname{idf}(t).
+$$
+
+Por último, cada vector se normaliza con la norma \(L_2\):
+
+$$
+\widehat{\operatorname{tfidf}}(t,d) =
+\frac{\operatorname{tfidf}(t,d)}
+{\sqrt{\sum_{t' \in V} \operatorname{tfidf}(t',d)^2}},
+$$
+
+donde \(V\) es el vocabulario aprendido a partir de los datos de entrenamiento.
 
 TF-IDF no clasifica por sí solo: prepara las características de texto que luego
 utiliza el modelo de clasificación.

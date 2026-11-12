@@ -31,3 +31,8 @@ notebooks = [
     "matplotlib>=3.10",
     "nbclient>=0.10",
 ]
+
+[tool.pytest.ini_options]
+markers = [
+    "integration: exercises training, prediction, and model persistence together",
+]

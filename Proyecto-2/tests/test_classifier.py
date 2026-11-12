@@ -122,6 +122,7 @@ def test_split_dataset_moves_real_rare_class_samples_to_cover_test():
     assert set(train[NAME_COLUMN]).isdisjoint(test[NAME_COLUMN])
 
 
+@pytest.mark.integration
 def test_fit_predict_and_save_roundtrip(tmp_path):
     train, test = split_dataset(make_frame(), test_size=0.25, random_state=42)
     classifier = fit_classifier(train, test)

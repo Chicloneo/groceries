@@ -1,4 +1,4 @@
-name: proyecto-i-ci
+name: proyectos-i-ii-ci
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
   pull_request:
 
 jobs:
-  test:
+  proyecto-1:
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -36,3 +36,25 @@ jobs:
             --cov=proyecto_1.validator \
             --cov-report=term-missing \
             --cov-fail-under=60
+
+  proyecto-2:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Proyecto-2
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run Project 2 tests
+        run: pytest -q

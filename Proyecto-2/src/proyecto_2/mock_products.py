@@ -4,6 +4,8 @@ No forman parte del catálogo de entrenamiento: sirven para demostrar cómo se
 clasificaría un producto que todavía no existe en la base de datos.
 """
 
+# La lista recorre secciones distintas para que la demo no se limite a un solo
+# tipo de producto.
 MOCK_PRODUCTS: tuple[str, ...] = (
     "Leche semidesnatada Hacendado 1 L",
     "Bebida de avena sin azúcar añadido 1 L",

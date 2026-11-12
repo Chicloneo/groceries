@@ -92,6 +92,8 @@ def test_split_dataset_keeps_every_subcategory_in_test():
 
 def test_split_dataset_moves_real_rare_class_samples_to_cover_test():
     rows = []
+    # Con solo dos productos por clase, el split aleatorio puede dejar ambos
+    # ejemplos en el mismo conjunto.
     for subcategory_index in range(10):
         for product_index in range(2):
             rows.append(

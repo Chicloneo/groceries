@@ -1,2 +1,1 @@
-def main() -> None:
-    print("Hello from proyecto-2!")
+"""Clasificación de productos del catálogo de Mercadona."""

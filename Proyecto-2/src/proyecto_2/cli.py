@@ -88,12 +88,14 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def _load_or_train(args: argparse.Namespace) -> ProductClassifier:
+    # Reutilizar el modelo evita volver a entrenarlo en cada consulta.
     if args.model.exists() and not args.retrain:
         try:
             classifier = ProductClassifier.load(args.model)
             print(f"Modelo cargado desde {args.model}", file=sys.stderr)
             return classifier
         except Exception as exc:  # modelo antiguo o archivo corrupto
+            # Avisamos antes de reconstruirlo para que el reentrenamiento no pase inadvertido.
             print(
                 f"No se pudo cargar {args.model} ({exc}); se reentrena.",
                 file=sys.stderr,
@@ -119,6 +121,8 @@ def _load_or_train(args: argparse.Namespace) -> ProductClassifier:
 
 
 def _collect_names(args: argparse.Namespace) -> list[str]:
+    # Se da prioridad al CSV y luego a los --name; la lista de ejemplo solo se
+    # usa cuando el usuario no indicó una entrada.
     if args.input_csv is not None:
         frame = pd.read_csv(args.input_csv, encoding="utf-8-sig", dtype=str)
         if args.name_column not in frame.columns:
@@ -149,6 +153,8 @@ def _format_metrics(metrics: dict[str, float | int]) -> str:
         f"{metrics.get('num_subcategorias', 0)} subcategorías)"
     ]
     if "accuracy_categoria_test" in metrics:
+        # Las métricas de prueba no existen si el clasificador se cargó sin
+        # haber guardado resultados de evaluación.
         lines.append(
             "Categoría    — exactitud test: "
             f"{metrics['accuracy_categoria_test']:.1%} | "

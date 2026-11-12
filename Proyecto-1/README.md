@@ -56,7 +56,9 @@ uv run --no-sync pytest -q -m integration
 
 ## CI
 
-Workflow: [`../.github/workflows/ci.yml`](../.github/workflows/ci.yml)
+Workflow compartido por los dos proyectos:
+[`../.github/workflows/ci.yml`](../.github/workflows/ci.yml). CI ejecuta los
+tests de Proyecto 1 y Proyecto 2; este job mantiene la cobertura mínima del 60 %.
 
 ![Estado de CI](https://github.com/Chicloneo/groceries/actions/workflows/ci.yml/badge.svg)
 

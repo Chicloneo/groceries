@@ -83,7 +83,9 @@ uv run proyecto-2 --name "Cerveza sin alcohol 0,0 33 cl"
 exploración de datos, deduplicación, split estratificado, TF-IDF, entrenamiento,
 evaluación con matriz de confusión, interpretación de coeficientes,
 clasificación de productos nuevos y limitaciones. Está ejecutado con las salidas
-visibles para poder leerlo sin arrancar Jupyter.
+visibles para poder leerlo sin arrancar Jupyter. Sus salidas de evaluación aún
+corresponden al split anterior (129 de 134 subcategorías en test); los resultados
+actualizados están en la tabla de este README.
 
 Para abrirlo:
 
@@ -142,3 +144,10 @@ uv run pytest -q
 
 Los tests usan un catálogo sintético, así que no dependen de que exista el CSV
 del Proyecto 1.
+
+## CI
+
+El workflow compartido está en [`../.github/workflows/ci.yml`](../.github/workflows/ci.yml)
+y ejecuta las pruebas de Proyecto 1 y Proyecto 2 en cada `push` a `main` y en
+cada `pull request`. Proyecto 1 conserva el umbral de cobertura del 60 %;
+Proyecto 2 ejecuta su suite con `pytest -q`.

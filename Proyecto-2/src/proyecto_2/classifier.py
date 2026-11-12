@@ -39,6 +39,8 @@ CATEGORY_COLUMN = "categoria"
 SUBCATEGORY_COLUMN = "subcategoria"
 
 PROJECT_DIR = Path(__file__).resolve().parents[2]
+# Proyecto 2 lee el CSV creado por la extracción de Proyecto 1; no mantiene
+# una segunda copia del catálogo.
 DEFAULT_DATA_PATH = (
     PROJECT_DIR.parent / "Proyecto-1" / "Data" / "productos_madrid_centro.csv"
 )
@@ -56,6 +58,7 @@ def load_products(path: str | Path = DEFAULT_DATA_PATH) -> pd.DataFrame:
     if not path.exists():
         raise FileNotFoundError(f"No existe el catálogo de productos: {path}")
 
+    # El CSV puede llevar BOM y estos campos se usan como texto, no como números.
     frame = pd.read_csv(path, encoding="utf-8-sig", dtype=str)
     missing = {
         NAME_COLUMN,
@@ -100,6 +103,8 @@ def prepare_dataset(frame: pd.DataFrame) -> pd.DataFrame:
         & data[SUBCATEGORY_COLUMN].ne("")
     ]
 
+    # Hay una fila por CP en el catálogo, así que votamos una sola etiqueta por
+    # nombre. El orden alfabético resuelve los empates de forma repetible.
     counts = (
         data.groupby(
             [NAME_COLUMN, CATEGORY_COLUMN, SUBCATEGORY_COLUMN],
@@ -125,6 +130,8 @@ def build_pipeline(C: float = 10.0) -> Pipeline:
     ayudan con marcas, errores ortográficos y palabras compuestas del catálogo.
     """
 
+    # Las palabras capturan términos completos; los caracteres ayudan con
+    # marcas y pequeñas diferencias de escritura.
     features = FeatureUnion(
         [
             (
@@ -181,9 +188,8 @@ def split_dataset(
         stratify=data[SUBCATEGORY_COLUMN],
     )
 
-    # StratifiedShuffleSplit can assign every row of a rare class to one side.
-    # Move a real product across when needed; never duplicate a product between
-    # training and test.
+    # Con clases muy pequeñas, la estratificación puede dejar una subcategoría
+    # solo en un conjunto. Movemos un producto real al otro lado; no lo copiamos.
     for subcategory in class_counts.index:
         train_rows = train.loc[train[SUBCATEGORY_COLUMN].eq(subcategory)]
         test_rows = test.loc[test[SUBCATEGORY_COLUMN].eq(subcategory)]
@@ -206,6 +212,8 @@ def _top_predictions(
 
     probabilities = model.predict_proba(texts)
     classes = model.classes_
+    # Evita devolver cero alternativas si se pide top_k <= 0, o más clases de
+    # las que aprendió el modelo.
     top_k = max(1, min(top_k, len(classes)))
     order = probabilities.argsort(axis=1)[:, ::-1][:, :top_k]
     return [
@@ -241,6 +249,8 @@ class ProductClassifier:
             texts = [names]
         else:
             texts = [str(name) for name in names]
+        # Los nombres vacíos no aportan nada al modelo y pueden dar resultados
+        # engañosos, así que se descartan antes de predecir.
         texts = [text.strip() for text in texts if text and text.strip()]
         if not texts:
             raise ValueError("Hay que proporcionar al menos un nombre de producto.")
@@ -274,6 +284,7 @@ class ProductClassifier:
 
         path = Path(path)
         path.parent.mkdir(parents=True, exist_ok=True)
+        # Ambos modelos y sus métricas se guardan juntos para mantenerlos ligados.
         joblib.dump(
             {
                 "format_version": 1,
@@ -324,6 +335,8 @@ def fit_classifier(
     if train.empty:
         raise ValueError("El conjunto de entrenamiento está vacío.")
 
+    # Categoría y subcategoría son dos objetivos distintos, aunque comparten el
+    # mismo texto de entrada.
     category_model = build_pipeline(C).fit(train[NAME_COLUMN], train[CATEGORY_COLUMN])
     subcategory_model = build_pipeline(C).fit(
         train[NAME_COLUMN], train[SUBCATEGORY_COLUMN]
@@ -407,6 +420,7 @@ def train_classifier(
 ) -> ProductClassifier:
     """Carga los datos, separa train/test y entrena el clasificador."""
 
+    # Aceptar un DataFrame permite entrenar con fixtures sin leer el CSV real.
     path = Path(data_path) if data_path is not None else DEFAULT_DATA_PATH
     dataset = prepare_dataset(frame) if frame is not None else load_products(path)
     train, test = split_dataset(dataset, test_size=test_size, random_state=random_state)

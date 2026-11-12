@@ -46,7 +46,13 @@ dist/
 build/
 out/
 *.log
+.coverage
 
 cp_calles/
 .venv/
 inspeccion*/
+
+__pycache__/
+
+src/proyecto_1/catalogo_mercadona.csv
+src/proyecto_1/catalogo_mercadona_progreso.json

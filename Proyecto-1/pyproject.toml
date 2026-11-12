@@ -11,12 +11,19 @@ dependencies = [
     "bs4>=0.0.2",
     "pandas>=3.0.6",
     "playwright>=1.64.1",
+    "pydantic>=2.14.3",
     "requests>=2.34.2",
 ]
 
 [project.scripts]
-proyecto-1 = "proyecto_1:main"
+proyecto-1 = "proyecto_1.cli:main"
 
 [build-system]
 requires = ["uv_build>=0.12.16,<0.13.0"]
 build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=5.0",
+]

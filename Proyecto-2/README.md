@@ -47,6 +47,65 @@ uv run pytest -q
 `pyproject.toml` declara las dependencias y `uv.lock` fija las versiones
 resueltas; no hay `requirements.txt`.
 
+## Probar el intérprete de listas con Ollama
+
+Desde `Proyecto-2/`, asegúrate de que Ollama está instalado y de que el modelo
+configurado existe localmente. Si todavía no lo has descargado:
+
+```bash
+ollama pull qwen3.5:4b
+```
+
+Deja Ollama ejecutándose. Si tu instalación no inicia el servidor
+automáticamente, arráncalo en otra terminal con `ollama serve`. Después instala
+las dependencias y prueba la extracción estructurada:
+
+```bash
+uv sync
+uv run --env-file .env python -m proyecto_2.llm \
+  "Necesito comprar 6 L de leche semidesnatada y carne picada"
+```
+
+La salida debe ser un JSON con dos productos. La leche tendrá cantidad solicitada
+`6` y unidad `L`; la carne picada no tendrá cantidad solicitada. El CP será `null`
+si no lo incluiste en el mensaje. En el uso real, la aplicación debe pedirlo antes
+de llamar a la búsqueda si tampoco lo tiene guardado en la sesión. Python pasa el
+`original_text` de cada producto por separado al clasificador guardado en
+`models/clasificador_productos.joblib` y añade las predicciones de categoría y
+subcategoría a ese producto. Por tanto, esa frase produce una predicción para
+`6 L de leche semidesnatada` y otra para `carne picada`. El archivo del modelo
+debe existir; este flujo no lo reentrena.
+
+`parse_selection()` se prueba después de que Python haya encontrado y presentado
+opciones. Para probar solo ese parser, puedes pasarle una fila real como opción;
+la primera fila del CSV se usa aquí únicamente como dato de prueba, no como
+resultado de búsqueda:
+
+```bash
+uv run --env-file .env python - <<'PY'
+import pandas as pd
+
+from proyecto_2.llm import CatalogProduct, ProductOption, parse_selection
+
+catalogo = pd.read_csv(
+    "../Data/Clean/preprocesado_1_madrid_centro.csv",
+    sep=";",
+    dtype={"cp": "string"},
+    encoding="utf-8-sig",
+)
+fila = CatalogProduct.model_validate(catalogo.iloc[0].to_dict())
+opcion = ProductOption(option_id="opcion-1", product=fila)
+
+print(f"Opción 1: {fila.nombre} — {fila.precio} €")
+seleccion = parse_selection("dame dos de la opción 1", [opcion])
+print(seleccion.model_dump_json(indent=2))
+PY
+```
+
+La selección esperada es el identificador `opcion-1` con `sale_quantity: 2`.
+El parser de selecciones no busca ni suma precios; el backend deberá comprobar
+de nuevo el identificador y calcular el importe desde el CSV.
+
 ## Script de consola
 
 ```bash

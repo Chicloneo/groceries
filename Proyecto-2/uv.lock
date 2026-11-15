@@ -1663,6 +1663,7 @@ dependencies = [
     { name = "ollama" },
     { name = "openai" },
     { name = "pandas" },
+    { name = "pydantic" },
     { name = "scikit-learn" },
 ]
 
@@ -1684,6 +1685,7 @@ requires-dist = [
     { name = "ollama", specifier = ">=0.6.3" },
     { name = "openai", specifier = ">=3.51.0" },
     { name = "pandas", specifier = ">=3.1.1" },
+    { name = "pydantic", specifier = ">=2.0" },
     { name = "scikit-learn", specifier = ">=1.9.1" },
 ]
 

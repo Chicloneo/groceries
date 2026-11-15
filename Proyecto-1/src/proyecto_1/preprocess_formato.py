@@ -25,7 +25,7 @@ OUTPUT_COLUMNS = [
     "es_pack",
     "numero_unidades_pack",
     "numero_subunidades_pack_por_unidad",
-    "cantidad producto",
+    "cantidad_producto",
     "medida_producto",
 ]
 
@@ -172,7 +172,7 @@ def extract_format_values(row: pd.Series) -> dict[str, Any]:
         "es_pack": is_pack,
         "numero_unidades_pack": pack_count if is_pack else pd.NA,
         "numero_subunidades_pack_por_unidad": 1 if is_pack else pd.NA,
-        "cantidad producto": total_amount,
+        "cantidad_producto": total_amount,
         "medida_producto": measure,
     }
 
@@ -203,7 +203,7 @@ def main() -> None:
         index=df.index,
         columns=OUTPUT_COLUMNS,
     )
-    for column in ("numero_unidades_pack", "numero_subunidades_pack_por_unidad", "cantidad producto"):
+    for column in ("numero_unidades_pack", "numero_subunidades_pack_por_unidad", "cantidad_producto"):
         parsed[column] = pd.to_numeric(parsed[column], errors="coerce").astype("Float64")
     parsed["es_pack"] = parsed["es_pack"].astype("boolean")
     result = pd.concat([df, parsed], axis=1)
@@ -215,7 +215,7 @@ def main() -> None:
 
     print(f"Filas procesadas: {len(result)}")
     print(f"Packs: {int(result['es_pack'].sum())}")
-    print(f"Cantidad producto nula: {int(result['cantidad producto'].isna().sum())}")
+    print(f"Cantidad producto nula: {int(result['cantidad_producto'].isna().sum())}")
     print(f"CSV generado: {OUTPUT_PATH}")
 
 

@@ -76,6 +76,100 @@ subcategoría a ese producto. Por tanto, esa frase produce una predicción para
 `6 L de leche semidesnatada` y otra para `carne picada`. El archivo del modelo
 debe existir; este flujo no lo reentrena.
 
+## Buscar opciones en el catálogo
+
+`proyecto_2.catalog_search.search()` recibe el `ShoppingRequest` y busca cada
+producto en `../Data/Clean/preprocesado_1_madrid_centro.csv`, restringiendo por
+CP, categoría y subcategoría, y comparando el nombre con `pseudo_name` y
+`search_terms`. Los atributos de `features` también deben aparecer en el nombre
+o el formato. Las palabras relevantes de cada término se intersectan, así que
+una diferencia como «carne picada de vacuno» frente a «Preparado de carne picada
+vacuno» no depende de que coincida la frase completa. Si no encuentra filas con
+los `features`, muestra todas las coincidencias de la descripción base con un
+aviso de qué detalles no están disponibles. La cantidad solicitada queda en el
+producto de entrada y no filtra formatos.
+
+```python
+from proyecto_2.catalog_search import search
+from proyecto_2.llm import parse_request
+
+peticion = parse_request(
+    "Necesito comprar 6 L de leche semidesnatada y carne picada",
+    cp="28012",
+)
+resultados = search(peticion)
+for resultado in resultados:
+    print(resultado["status"], resultado["clarification_question"])
+    for opcion in resultado["options"]:
+        print(opcion["option_id"], opcion["product"]["nombre"])
+```
+
+Cada producto ofrece todas las coincidencias si hay cinco o menos. Si hay más,
+el resultado usa `status: "needs_clarification"`, incluye el número de
+coincidencias y pregunta por más detalle sin escoger cinco arbitrariamente. Si
+el fallback elimina detalles de `features` que no aparecen en el catálogo,
+devuelve la lista base completa con un aviso. Las opciones incluyen `option_id`
+y `product`, listas para `parse_selection()`. Si falta el CP, la función pide
+ese dato antes de buscar.
+
+## Flujo completo de selección
+
+`proyecto_2.shopping_flow.start_shopping()` conecta la extracción y la búsqueda.
+La persona puede elegir opciones de un producto con
+`select_for_product(session, product_index, texto)`. Se puede llamar de nuevo
+para acumular elecciones. Python multiplica las unidades comerciales elegidas
+por `cantidad producto` del catálogo y compara el contenido acumulado con la
+cantidad pedida cuando ambas unidades son compatibles (`g`/`kg` o `ml`/`L`).
+También calcula el importe de cada opción elegida como `precio × sale_quantity`
+y actualiza el total de la cesta en Python. No determina qué combinación debe
+elegir la persona.
+
+```python
+from proyecto_2.shopping_flow import select_for_product, start_shopping
+
+sesion = start_shopping(
+    "Necesito comprar 8 L de leche semidesnatada",
+    cp="28012",
+)
+opciones = sesion.searches[0]["options"]
+print(opciones)
+
+seleccion = select_for_product(sesion, 0, "un pack y dos briks")
+print(seleccion["selected_quantity"], seleccion["remaining_quantity"])
+print(seleccion["selected_total_price"], seleccion["basket_total_price"])
+```
+
+Si la cantidad seleccionada aún no alcanza el objetivo, otra llamada acumula
+una elección adicional y devuelve la cantidad restante.
+
+## Probar el flujo por CLI
+
+Con Ollama ejecutándose y el modelo configurado en `.env`, desde `Proyecto-2/`
+puedes iniciar el flujo interactivo:
+
+```bash
+uv run --env-file .env python -m proyecto_2.shopping_cli \
+  "Necesito comprar 8 L de leche semidesnatada" --cp 28012
+```
+
+Si ejecutas el CLI sin una petición, imprime instrucciones para escribir cada
+producto en una línea numerada, con su cantidad y detalles:
+
+```bash
+uv run --env-file .env python -m proyecto_2.shopping_cli
+```
+
+El CLI muestra las opciones, acepta selecciones en lenguaje natural y vuelve a
+preguntar si la cantidad elegida aún no llega a la solicitada. Si no indicas
+`--cp` y la petición no contiene uno, lo pregunta por consola. También está
+disponible el comando instalado `uv run --env-file .env proyecto-2-compra`.
+Al terminar imprime un ticket con el precio unitario de cada opción, el subtotal
+de cada producto y el total de la cesta.
+
+Si hay más de cinco coincidencias o ninguna, el CLI espera una precisión, vuelve
+a interpretar ese detalle para el producto actual y repite la búsqueda. Escribe
+`saltar` para omitir ese producto.
+
 `parse_selection()` se prueba después de que Python haya encontrado y presentado
 opciones. Para probar solo ese parser, puedes pasarle una fila real como opción;
 la primera fila del CSV se usa aquí únicamente como dato de prueba, no como
@@ -103,8 +197,9 @@ PY
 ```
 
 La selección esperada es el identificador `opcion-1` con `sale_quantity: 2`.
-El parser de selecciones no busca ni suma precios; el backend deberá comprobar
-de nuevo el identificador y calcular el importe desde el CSV.
+El parser de selecciones no busca ni suma precios. La orquestación valida los
+identificadores contra las opciones ofrecidas y calcula los importes desde los
+precios de esas filas del CSV.
 
 ## Script de consola
 

@@ -142,3 +142,47 @@ def test_search_applies_explicit_features_to_name_or_format(tmp_path):
     assert [option["product"]["nombre"] for option in result["options"]] == [
         "Leche semidesnatada sin lactosa"
     ]
+
+
+def test_taxonomy_only_returns_all_options_without_text_filter(tmp_path):
+    rows = [
+        make_row("Pizza carbonara familiar", format="600 g"),
+        make_row("Pizza margarita familiar", format="500 g"),
+        make_row("Pizza de jamón familiar", format="700 g"),
+        make_row("Pizza carbonara familiar", cp="28013", format="600 g"),
+    ]
+    product = make_product(
+        pseudo_name="producto inexistente",
+        search_terms=["producto inexistente"],
+        features=[],
+        category=CATEGORY,
+        subcategory=SUBCATEGORY,
+    )
+    product = product.model_copy(
+        update={
+            "categoria": "Pizzas y platos preparados",
+            "subcategoria": "Pizzas",
+        }
+    )
+
+    # Las filas del ejemplo usan la categoría/sucategoría por defecto del
+    # helper; las adaptamos al producto solicitado.
+    adapted_rows = [
+        make_row(
+            row["nombre"],
+            cp=row["cp"],
+            category="Pizzas y platos preparados",
+            subcategory="Pizzas",
+            format=row["formato"],
+        )
+        for row in rows
+    ]
+    result = search(
+        make_request(products=[product]),
+        catalog_path=write_catalog(tmp_path, adapted_rows),
+        taxonomy_only=True,
+    )[0]
+
+    assert result["status"] == "options"
+    assert result["match_count"] == 3
+    assert len(result["options"]) == 3

@@ -35,7 +35,7 @@ def test_simple_graph_template(monkeypatch):
     monkeypatch.setattr(
         graph,
         "search",
-        lambda parsed: [
+        lambda parsed, taxonomy_only=False: [
             {
                 "request_product": request.products[0].model_dump(mode="json"),
                 "status": "options",

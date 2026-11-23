@@ -10,6 +10,8 @@ from .interpreter import parse_request
 class Estado(TypedDict, total=False):
     peticion_usuario: str
     codigo_postal: str | None
+    categoria_seleccionada: str | None
+    subcategoria_seleccionada: str | None
     peticion_estructurada: ShoppingRequest
     productos_encontrados: list[dict[str, Any]]
     respuesta_final: str
@@ -20,6 +22,16 @@ def entender_peticion(estado: Estado) -> dict:
         estado["peticion_usuario"],
         cp=estado.get("codigo_postal"),
     )
+    categoria = estado.get("categoria_seleccionada")
+    subcategoria = estado.get("subcategoria_seleccionada")
+    if categoria or subcategoria:
+        productos = []
+        for producto in peticion.products:
+            values = producto.model_dump()
+            values["categoria"] = categoria
+            values["subcategoria"] = subcategoria
+            productos.append(type(producto).model_validate(values))
+        peticion = peticion.model_copy(update={"products": productos})
     return {
         "peticion_estructurada": peticion,
         "codigo_postal": peticion.cp,
@@ -27,7 +39,13 @@ def entender_peticion(estado: Estado) -> dict:
 
 
 def buscar_productos(estado: Estado) -> dict:
-    encontrados = search(estado["peticion_estructurada"])
+    encontrados = search(
+        estado["peticion_estructurada"],
+        taxonomy_only=bool(
+            estado.get("categoria_seleccionada")
+            or estado.get("subcategoria_seleccionada")
+        ),
+    )
     return {"productos_encontrados": encontrados}
 
 

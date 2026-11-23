@@ -126,18 +126,24 @@ if "mensajes" not in st.session_state:
     st.session_state.pendiente = None
     st.session_state.opciones_pendientes = []
     st.session_state.seleccion_actual = None
+    st.session_state.categoria_seleccionada = None
+    st.session_state.subcategoria_seleccionada = None
 
 with st.sidebar:
     st.markdown("### Prueba con...")
     for index, ejemplo in enumerate(EJEMPLOS):
         if st.button(ejemplo, key=f"ejemplo-{index}", use_container_width=True):
             st.session_state.pendiente = ejemplo
+            st.session_state.categoria_seleccionada = None
+            st.session_state.subcategoria_seleccionada = None
     st.markdown("---")
     if st.button("Nueva conversación", use_container_width=True):
         st.session_state.mensajes = []
         st.session_state.pendiente = None
         st.session_state.opciones_pendientes = []
         st.session_state.seleccion_actual = None
+        st.session_state.categoria_seleccionada = None
+        st.session_state.subcategoria_seleccionada = None
         st.rerun()
 
 st.title("🛒 Asistente de compra")
@@ -189,15 +195,12 @@ texto = st.chat_input(
 )
 
 if buscar:
-    partes = []
-    if categoria:
-        partes.append(categoria)
-    if subcategoria:
-        partes.append(subcategoria)
-    if producto.strip():
-        partes.append(producto.strip())
-    if partes:
-        texto = " ".join(partes)
+    texto = producto.strip()
+    st.session_state.categoria_seleccionada = categoria or None
+    st.session_state.subcategoria_seleccionada = subcategoria or None
+    if not texto:
+        st.warning("Escribe el producto concreto que quieres buscar.")
+        texto = None
 
 if st.session_state.pendiente:
     texto = st.session_state.pendiente
@@ -228,6 +231,8 @@ if texto:
                     "content": respuesta,
                 })
                 st.session_state.opciones_pendientes = []
+                st.session_state.categoria_seleccionada = None
+                st.session_state.subcategoria_seleccionada = None
                 st.stop()
 
             respuesta = (
@@ -245,6 +250,10 @@ if texto:
                 resultado = app.invoke({
                     "peticion_usuario": texto,
                     "codigo_postal": "28012",
+                    "categoria_seleccionada":
+                        st.session_state.categoria_seleccionada,
+                    "subcategoria_seleccionada":
+                        st.session_state.subcategoria_seleccionada,
                 })
                 respuesta = resultado["respuesta_final"]
                 st.markdown(respuesta)

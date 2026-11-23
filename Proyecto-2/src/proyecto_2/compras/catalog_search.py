@@ -124,6 +124,8 @@ def _serialize_option(row: pd.Series, option_id: str) -> dict[str, Any]:
 def search(
     response: ShoppingRequest,
     catalog_path: str | Path = DEFAULT_CATALOG_PATH,
+    *,
+    taxonomy_only: bool = False,
 ) -> list[dict[str, Any]]:
     """Busca hasta cinco opciones para cada producto de una petición.
 
@@ -162,9 +164,28 @@ def search(
     results: list[dict[str, Any]] = []
 
     for product_index, product in enumerate(response.products, start=1):
-        matches = frame.loc[_product_mask(frame, product, response.cp)].copy()
+        taxonomy_restricted = taxonomy_only
+
+        if taxonomy_restricted:
+            taxonomy_mask = (
+                frame["cp"].astype("string").str.strip().eq(response.cp)
+            )
+            if product.categoria is not None:
+                taxonomy_mask &= frame["categoria"].eq(product.categoria)
+            if product.subcategoria is not None:
+                taxonomy_mask &= frame["subcategoria"].eq(product.subcategoria)
+            matches = frame.loc[taxonomy_mask].copy()
+        else:
+            matches = frame.loc[
+                _product_mask(frame, product, response.cp)
+            ].copy()
+
         used_feature_fallback = False
-        if matches.empty and product.features:
+        if (
+            not taxonomy_restricted
+            and matches.empty
+            and product.features
+        ):
             # Si el nombre/categoría existen pero no hay fila que cumpla algún
             # detalle expreso (por ejemplo, una marca ausente), ofrecemos todas
             # las coincidencias de la descripción base y lo indicamos al usuario.
@@ -218,7 +239,7 @@ def search(
                 f"{', '.join(product.features)}. Muestro todas las opciones "
                 f"para «{product.pseudo_name}» sin esos detalles."
             )
-        elif len(matches) > MAX_OPTIONS:
+        elif not taxonomy_restricted and len(matches) > MAX_OPTIONS:
             result["status"] = "needs_clarification"
             result["clarification_question"] = (
                 f"He encontrado {len(matches)} opciones para "

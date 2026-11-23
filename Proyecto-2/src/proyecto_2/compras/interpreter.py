@@ -6,7 +6,8 @@ from functools import lru_cache
 from typing import Sequence
 
 from ..clasificador.classifier import ProductClassifier
-from ..groq import _call_with_retries, _structured_chat
+from ..ai_client import structured_chat
+from ..groq import _call_with_retries
 from .contracts import Producto, ShoppingRequest, _ShoppingRequestPayload, LLMError
 
 
@@ -90,7 +91,7 @@ def _cached_parse(text: str) -> _ShoppingRequestPayload:
     """Evita repetir una extracción idéntica durante la misma ejecución."""
     try:
         raw = _call_with_retries(
-            lambda: _structured_chat(text, SYSTEM_PROMPT, _ShoppingRequestPayload)
+            lambda: structured_chat(text, SYSTEM_PROMPT, _ShoppingRequestPayload)
         )
     except LLMError:
         raise

@@ -1,7 +1,8 @@
 import json
 from decimal import Decimal
 
-from ..groq import _call_with_retries, _structured_chat
+from ..ai_client import structured_chat as _structured_chat
+from ..groq import _call_with_retries
 from .contracts import ProductSelection, SelectionRequest
 
 

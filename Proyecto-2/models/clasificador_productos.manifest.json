@@ -1,0 +1,31 @@
+{
+  "artifact": "models/clasificador_productos.joblib",
+  "sha256": "00d065df1891ed97325fb1a5f7ab8b850408890c4c75a58f36e2c40773725f8b",
+  "format_version": 1,
+  "trained_at": "2026-11-12T20:32:21",
+  "environment": {
+    "python": "3.14.7",
+    "platform": "macOS-27.2.1-arm64-arm-64bit-Mach-O",
+    "scikit_learn": "1.9.1",
+    "joblib": "1.6.0"
+  },
+  "training": {
+    "category_model": true,
+    "subcategory_model": true,
+    "C": 10.0,
+    "random_state": null,
+    "source_dataset": null
+  },
+  "metrics": {
+    "productos": 2851,
+    "num_categorias": 24,
+    "num_subcategorias": 134,
+    "accuracy_categoria_train": 1.0,
+    "accuracy_subcategoria_train": 1.0,
+    "prueba": 720,
+    "accuracy_categoria_test": 0.9236,
+    "macro_f1_categoria_test": 0.9122,
+    "accuracy_subcategoria_test": 0.8542,
+    "macro_f1_subcategoria_test": 0.8113
+  }
+}

@@ -37,26 +37,27 @@ jobs:
             --cov-report=term-missing \
             --cov-fail-under=60
 
-#DESCOMENTARLO CUANDO TERMINE EL PROYECTO 2
-#  proyecto-2:
-#    runs-on: ubuntu-latest
-#    defaults:
-#      run:
-#        working-directory: Proyecto-2
-#    steps:
-#      - name: Checkout
-#        uses: actions/checkout@v4
-#
-#      - name: Set up Python
-#        uses: actions/setup-python@v5
-#        with:
-#          python-version: "3.14"
+  proyecto-2:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Proyecto-2
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-#      - name: Set up uv
-#        uses: astral-sh/setup-uv@v10.3.3
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
 
-#      - name: Install dependencies
-#        run: uv sync --locked
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v10.3.3
 
-#      - name: Run Project 2 tests
-#        run: uv run pytest -q
+      - name: Install dependencies
+        run: uv sync --locked
+
+      - name: Run Project 2 tests
+        run: uv run pytest -q
+        env:
+          AI_PROVIDER: mock

@@ -17,6 +17,7 @@ from proyecto_2.compras.selection import (
 )
 from proyecto_2.compras import selection
 from proyecto_2.clasificador.taxonomia import cargar_mapa_categoria_subcategoria
+from proyecto_2.ai_client import structured_chat
 
 
 def make_request():
@@ -251,6 +252,38 @@ def test_numeric_selection_is_resolved_in_python(monkeypatch):
     )
 
     assert parsed.selections[0].sale_quantity == 1
+
+
+def test_mock_provider_returns_structured_requests(monkeypatch):
+    monkeypatch.setenv("AI_PROVIDER", "mock")
+
+    request = structured_chat(
+        "Leche 28012",
+        "Extrae productos",
+        _ShoppingRequestPayload,
+    )
+
+    assert request.cp == "28012"
+    assert request.products[0].pseudo_name == "Leche"
+
+
+def test_mock_provider_returns_selection(monkeypatch):
+    monkeypatch.setenv("AI_PROVIDER", "mock")
+    prompt = (
+        "Opciones disponibles:\n"
+        '[{"position": 1, "option_id": "producto-1-opcion-1"}]'
+        "\n\nRespuesta del usuario:\n"
+        "opción 1"
+    )
+
+    result = structured_chat(
+        prompt,
+        "Interpreta selección",
+        SelectionRequest,
+    )
+
+    assert result.selections[0].option_id == "producto-1-opcion-1"
+    assert result.selections[0].sale_quantity == 1
 
 
 def test_basket_accumulates_two_selections():

@@ -123,6 +123,14 @@ def interpretar_seleccion(
         "Respuesta del usuario:\n"
         f"{texto}"
     )
+    if texto.strip().isdigit():
+        posicion = int(texto.strip())
+        if 1 <= posicion <= len(opciones):
+            prompt += (
+                "\n\nIndicación inequívoca: la respuesta contiene solo "
+                f"un número ({posicion}). Debes seleccionar la opción "
+                f"en la posición {posicion}, con sale_quantity: 1."
+            )
 
     result = _call_with_retries(
         lambda: _structured_chat(

@@ -227,3 +227,42 @@ def test_selection_uses_groq_and_python_sums_catalog_price(monkeypatch):
 
     assert parsed.selections[0].sale_quantity == 2
     assert total.quantize(Decimal("0.01")) == Decimal("6.80")
+
+
+def test_numeric_selection_prompt_marks_position_one(monkeypatch):
+    captured_prompt = ""
+    opciones = [
+        {
+            "option_id": "producto-1-opcion-1",
+            "product": {
+                "nombre": "Pizza carbonara familiar",
+                "formato": "600 g",
+                "precio": 3.40,
+            },
+        }
+    ]
+
+    def fake_chat(text, prompt, model):
+        nonlocal captured_prompt
+        captured_prompt = text
+        return SelectionRequest(
+            selections=[
+                ProductSelection(
+                    option_id="producto-1-opcion-1",
+                    sale_quantity=1,
+                )
+            ],
+            needs_clarification=False,
+            clarification_question=None,
+        )
+
+    monkeypatch.setattr(selection, "_structured_chat", fake_chat)
+
+    parsed = interpretar_seleccion(
+        "1",
+        opciones,
+    )
+
+    assert parsed.selections[0].sale_quantity == 1
+    assert "opción" in captured_prompt
+    assert "posición 1" in captured_prompt

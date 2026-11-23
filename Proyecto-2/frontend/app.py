@@ -134,7 +134,7 @@ if "mensajes" not in st.session_state:
     st.session_state.cesta = {}
     st.session_state.opciones_por_id = {}
     st.session_state.seleccion_cache = {}
-    st.session_state.seleccion_cache = {}
+    st.session_state.procesando_seleccion = False
 
 with st.sidebar:
     st.markdown("### Prueba con...")
@@ -146,6 +146,7 @@ with st.sidebar:
             st.session_state.cesta = {}
             st.session_state.opciones_por_id = {}
             st.session_state.seleccion_cache = {}
+            st.session_state.procesando_seleccion = False
     st.markdown("---")
     if st.button("Nueva conversación", use_container_width=True):
         st.session_state.mensajes = []
@@ -157,6 +158,7 @@ with st.sidebar:
         st.session_state.cesta = {}
         st.session_state.opciones_por_id = {}
         st.session_state.seleccion_cache = {}
+        st.session_state.procesando_seleccion = False
         st.rerun()
 
     if st.session_state.cesta:
@@ -221,7 +223,8 @@ for mensaje in st.session_state.mensajes:
 texto = st.chat_input(
     "Elige una opción por su número"
     if st.session_state.opciones_pendientes
-    else "¿Qué quieres comprar?"
+    else "¿Qué quieres comprar?",
+    disabled=st.session_state.procesando_seleccion,
 )
 
 if buscar:
@@ -251,11 +254,20 @@ if texto:
             seleccion = st.session_state.seleccion_cache.get(clave_seleccion)
 
             if seleccion is None:
+                st.session_state.procesando_seleccion = True
                 with st.spinner("Interpretando tu selección..."):
-                    seleccion = interpretar_seleccion(
-                        texto,
-                        st.session_state.opciones_pendientes,
-                    )
+                    try:
+                        seleccion = interpretar_seleccion(
+                            texto,
+                            st.session_state.opciones_pendientes,
+                        )
+                    except Exception as error:
+                        st.session_state.procesando_seleccion = False
+                        st.error(
+                            f"No pude interpretar la selección: {error}"
+                        )
+                        st.stop()
+                st.session_state.procesando_seleccion = False
                 st.session_state.seleccion_cache[clave_seleccion] = seleccion
 
             if seleccion.needs_clarification:

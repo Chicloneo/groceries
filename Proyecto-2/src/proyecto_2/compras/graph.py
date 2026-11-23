@@ -53,21 +53,20 @@ def generar_respuesta(productos: list[dict[str, Any]]) -> str:
     if not productos:
         return "No encontré productos concretos en tu petición."
 
-    lines: list[str] = []
+    lines = []
     for resultado in productos:
         pedido = resultado["request_product"]
         lines.append(f"Producto pedido: {pedido['original_text']}")
 
-        if resultado["status"] == "needs_postal_code":
+        status = resultado["status"]
+        if status in {"needs_postal_code", "needs_clarification"}:
             lines.append(resultado["clarification_question"])
-        elif resultado["status"] == "needs_clarification":
-            lines.append(resultado["clarification_question"])
-        elif resultado["status"] == "no_matches":
+        elif status == "no_matches":
             lines.append("No encontré coincidencias en el catálogo.")
         else:
             if resultado.get("notice"):
                 lines.append(resultado["notice"])
-            lines.append("Opciones:")
+            lines.append("Elige una de estas opciones. Indica el número:")
             for position, opcion in enumerate(resultado["options"], start=1):
                 producto = opcion["product"]
                 lines.append(

@@ -1,13 +1,15 @@
 # Proyecto 2
 
-Proyecto Python para convertir una petición de compra en lenguaje natural,
-buscar productos reales en el catálogo de Mercadona y calcular el importe.
+Aplicación Streamlit para probar la lista de la compra:
 
-Groq interpreta el texto. Python clasifica, busca, valida y suma precios.
+1. Escribe una petición en lenguaje natural.
+2. El LLM interpreta los productos.
+3. Python busca coincidencias reales en el catálogo de Mercadona.
+4. Seleccionas las opciones y la aplicación calcula el total de la cesta.
 
 ## Configuración
 
-Desde `Proyecto-2/`:
+Desde la carpeta `Proyecto-2/`:
 
 ```bash
 uv sync
@@ -22,32 +24,37 @@ GROQ_MODEL=llama-3.3-70b-versatile
 LLM_MAX_ATTEMPTS=3
 ```
 
-## Ejecutar el grafo
-
-```bash
-uv run --env-file .env proyecto-2 comprar \
-  "Leche semidesnatada Hacendado 1 litro"
-```
-
-El grafo tiene tres pasos:
-
-1. Extraer productos con `request_parser.py`.
-2. Buscar coincidencias reales con `catalog_search.py`.
-3. Presentar las opciones con una plantilla en `grafo/graph.py`.
-
-## Ejecutar el flujo interactivo completo
-
-Por ahora, `comprar` devuelve las opciones encontradas y no conserva selección
-ni calcula un ticket completo.
-
-## Abrir el frontend
+## Ejecutar las pruebas desde Streamlit
 
 ```bash
 uv run --env-file .env streamlit run frontend/app.py
 ```
 
-El frontend llama directamente al grafo de LangGraph. No crea un servidor API
-ni realiza solicitudes HTTP al backend.
+Streamlit abre la aplicación en el navegador. Todas las pruebas funcionales se
+hacen desde esta interfaz; no necesitas ejecutar comandos adicionales ni usar
+una API externa.
+
+### Flujo de prueba
+
+1. Opcionalmente, elige una categoría y una subcategoría para acotar la búsqueda.
+2. Escribe el producto en **Producto concreto** o pulsa un ejemplo de la barra lateral.
+3. Pulsa **Buscar**.
+4. Revisa las opciones que devuelve el catálogo.
+5. Escribe el número de una opción en el chat.
+6. También puedes indicar una cantidad o seleccionar varias opciones con lenguaje natural.
+7. Comprueba la cesta y el total calculado en la barra lateral.
+8. Pulsa **Nueva conversación** para reiniciar la cesta y comenzar otra prueba.
+
+### Ejemplos recomendados
+
+- `Leche semidesnatada Hacendado 1 litro`
+- `Aceite de oliva virgen extra Hacendado 1 litro`
+- `Huevos frescos 12 unidades`
+- `Dos pizzas carbonara`
+
+Si una búsqueda devuelve demasiadas opciones o no encuentra coincidencias,
+Streamlit muestra una aclaración o un aviso. Cambia la petición o las
+categorías seleccionadas para probar otro caso.
 
 ## Clasificador
 
@@ -56,27 +63,20 @@ uv run proyecto-2 clasificar --name "Leche de avena sin azúcar 1 L"
 ```
 
 El modelo se guarda automáticamente en `models/clasificador_productos.joblib`.
-Para entrenarlo de nuevo:
-
-```bash
-uv run proyecto-2 clasificar --retrain --test-size 0.2 --C 10
-```
 
 ## Código principal
 
 ```text
 src/proyecto_2/
-  contracts.py       Modelos Pydantic
-  llm_client.py      Conexión con Groq
-  prompts.py         Instrucciones para el modelo
-  request_parser.py  Interpretación de la petición
-  catalog_search.py  Búsqueda determinista en el CSV
-  selection_parser.py Interpretación de opciones elegidas
-  shopping_flow.py   Sesión, cantidades y totales
-  shopping_cli.py    CLI interactivo
-  grafo/             Grafo LangGraph de tres nodos
-  classifier.py      Clasificador de categoría y subcategoría
-  cli.py             CLI del clasificador
+  compras/
+    contracts.py       Modelos Pydantic
+    graph.py           Grafo LangGraph de búsqueda
+    interpreter.py     Interpretación de la petición
+    catalog_search.py  Búsqueda determinista en el CSV
+    selection.py       Interpretación de selecciones y totales
+  clasificador/
+    classifier.py      Clasificador de categoría y subcategoría
+    cli.py             CLI del clasificador
 ```
 
 ## Tests

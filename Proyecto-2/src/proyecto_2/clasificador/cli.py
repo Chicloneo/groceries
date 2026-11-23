@@ -1,60 +1,28 @@
-"""CLI para entrenar el clasificador y clasificar productos nuevos."""
+"""CLI para clasificar productos con el modelo guardado."""
 
 from __future__ import annotations
 
 import argparse
 import sys
 from pathlib import Path
-from time import perf_counter
 
 import pandas as pd
 
 from .classifier import (
-    DEFAULT_DATA_PATH,
     DEFAULT_MODEL_PATH,
     ProductClassifier,
-    train_classifier,
 )
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description=(
-            "Entrena un clasificador de categorías y subcategorías y lo aplica "
-            "a productos nuevos."
-        )
-    )
-    parser.add_argument(
-        "--data",
-        type=Path,
-        default=DEFAULT_DATA_PATH,
-        help=(
-            "CSV de entrenamiento "
-            "(por defecto, Proyecto-1/Data/productos_madrid_centro.csv)."
-        ),
+        description="Clasifica productos con el modelo guardado."
     )
     parser.add_argument(
         "--model",
         type=Path,
         default=DEFAULT_MODEL_PATH,
         help="Ruta del modelo joblib que se carga o se guarda.",
-    )
-    parser.add_argument(
-        "--retrain",
-        action="store_true",
-        help="Reentrena aunque ya exista un modelo guardado.",
-    )
-    parser.add_argument(
-        "--test-size",
-        type=float,
-        default=0.2,
-        help="Proporción del catálogo reservada para evaluar (0-1).",
-    )
-    parser.add_argument(
-        "--C",
-        type=float,
-        default=10.0,
-        help="Inverso de la regularización de la regresión logística.",
     )
     parser.add_argument(
         "--name",
@@ -86,36 +54,9 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def _load_or_train(args: argparse.Namespace) -> ProductClassifier:
-    # Reutilizar el modelo evita volver a entrenarlo en cada consulta.
-    if args.model.exists() and not args.retrain:
-        try:
-            classifier = ProductClassifier.load(args.model)
-            print(f"Modelo cargado desde {args.model}", file=sys.stderr)
-            return classifier
-        except Exception as exc:  # modelo antiguo o archivo corrupto
-            # Avisamos antes de reconstruirlo para que el reentrenamiento no pase inadvertido.
-            print(
-                f"No se pudo cargar {args.model} ({exc}); se reentrena.",
-                file=sys.stderr,
-            )
-
-    print(
-        f"Entrenando con {args.data} (esto puede tardar unos segundos)...",
-        file=sys.stderr,
-    )
-    started = perf_counter()
-    classifier = train_classifier(
-        data_path=args.data,
-        test_size=args.test_size,
-        C=args.C,
-    )
-    elapsed = perf_counter() - started
-    classifier.save(args.model)
-    print(
-        f"Modelo entrenado en {elapsed:.1f} s y guardado en {args.model}",
-        file=sys.stderr,
-    )
+def _load_model(args: argparse.Namespace) -> ProductClassifier:
+    classifier = ProductClassifier.load(args.model)
+    print(f"Modelo cargado desde {args.model}", file=sys.stderr)
     return classifier
 
 
@@ -142,7 +83,7 @@ def _collect_names(args: argparse.Namespace) -> list[str]:
 
 def _format_metrics(metrics: dict[str, float | int]) -> str:
     lines = [
-        f"Productos de entrenamiento: {metrics.get('productos', 0)} "
+        f"Productos usados por el modelo: {metrics.get('productos', 0)} "
         f"({metrics.get('num_categorias', 0)} categorías, "
         f"{metrics.get('num_subcategorias', 0)} subcategorías)"
     ]
@@ -166,7 +107,7 @@ def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
 
     try:
-        classifier = _load_or_train(args)
+        classifier = _load_model(args)
         names = _collect_names(args)
         predictions = classifier.predict(names, top_k=args.top_k)
     except (FileNotFoundError, ValueError, OSError) as exc:

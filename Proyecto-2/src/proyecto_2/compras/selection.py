@@ -1,4 +1,3 @@
-import re
 import json
 from decimal import Decimal
 
@@ -38,55 +37,6 @@ def buscar_opcion_por_numero(
     return opciones[posicion - 1]
 
 
-def extraer_opcion_y_cantidad(
-    texto: str,
-    opciones: list[dict],
-) -> tuple[dict | None, int]:
-    """Devuelve la opción y la cantidad expresada por el usuario."""
-    cantidad = 1
-    cantidad_antes_opcion = re.search(
-        r"^(\d+)\s+(?:de\s+)?(?:la\s+)?opci[oó]n\s*(\d+)",
-        texto.strip(),
-        re.IGNORECASE,
-    )
-    if cantidad_antes_opcion:
-        cantidad = int(cantidad_antes_opcion.group(1))
-        posicion = int(cantidad_antes_opcion.group(2))
-        opcion = (
-            opciones[posicion - 1]
-            if 1 <= posicion <= len(opciones)
-            else None
-        )
-    else:
-        opcion = buscar_opcion_por_numero(texto, opciones)
-        if opcion is None:
-            opcion_numero = re.search(
-                r"opci[oó]n\s*(\d+)",
-                texto,
-                re.IGNORECASE,
-            )
-            if opcion_numero:
-                posicion = int(opcion_numero.group(1))
-                opcion = (
-                    opciones[posicion - 1]
-                    if 1 <= posicion <= len(opciones)
-                    else None
-                )
-
-    if opcion is not None:
-        for coincidencia in re.findall(
-            r"(\d+)\s*(?:unidades|uds?\.?|packs?)",
-            texto,
-            re.IGNORECASE,
-        ):
-            cantidad = int(coincidencia)
-            break
-
-    if cantidad < 1:
-        cantidad = 1
-    return opcion, cantidad
-
-
 def sumar_cesta(cesta: dict[str, int], opciones: dict[str, dict]) -> Decimal:
     total = Decimal("0")
     for option_id, cantidad in cesta.items():
@@ -99,12 +49,25 @@ def interpretar_seleccion(
     texto: str,
     opciones: list[dict],
 ) -> SelectionRequest:
-    """Usa Groq para interpretar la elección y valida los IDs en Python."""
+    """Interpreta la elección: números en Python y texto libre con Groq."""
     if not opciones:
         return SelectionRequest(
             selections=[],
             needs_clarification=True,
             clarification_question="No hay opciones pendientes para seleccionar.",
+        )
+
+    opcion = buscar_opcion_por_numero(texto, opciones)
+    if opcion is not None:
+        return SelectionRequest(
+            selections=[
+                ProductSelection(
+                    option_id=opcion["option_id"],
+                    sale_quantity=1,
+                )
+            ],
+            needs_clarification=False,
+            clarification_question=None,
         )
 
     opciones_json = json.dumps(

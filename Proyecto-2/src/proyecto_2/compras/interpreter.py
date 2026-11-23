@@ -39,7 +39,7 @@ No inventes nombres oficiales, formatos, precios, disponibilidad ni totales.
 
 @lru_cache(maxsize=1)
 def _load_classifier() -> ProductClassifier:
-    """Carga una vez el clasificador ya entrenado guardado en models/."""
+    """Carga una vez el clasificador guardado en models/."""
     return ProductClassifier.load()
 
 
@@ -97,12 +97,6 @@ def _cached_parse(text: str) -> _ShoppingRequestPayload:
     except Exception as e:
         raise LLMError(f"Falló la llamada a Groq: {e}") from e
     return _clean_payload(raw)
-
-
-def clear_cache() -> None:
-    """Vacía extracción y modelo cargados, por ejemplo, si cambia el modelo."""
-    _cached_parse.cache_clear()
-    _load_classifier.cache_clear()
 
 
 def parse_request(text: str, cp: str | None = None) -> ShoppingRequest:

@@ -17,7 +17,7 @@ def main() -> int:
 
     clasificar = subparsers.add_parser(
         "clasificar",
-        help="Clasificar o entrenar productos",
+        help="Clasificar productos con el modelo guardado",
     )
     clasificar.add_argument("argumentos", nargs=argparse.REMAINDER)
 

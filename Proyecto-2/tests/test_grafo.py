@@ -229,8 +229,7 @@ def test_selection_uses_groq_and_python_sums_catalog_price(monkeypatch):
     assert total.quantize(Decimal("0.01")) == Decimal("6.80")
 
 
-def test_numeric_selection_prompt_marks_position_one(monkeypatch):
-    captured_prompt = ""
+def test_numeric_selection_is_resolved_in_python(monkeypatch):
     opciones = [
         {
             "option_id": "producto-1-opcion-1",
@@ -242,30 +241,16 @@ def test_numeric_selection_prompt_marks_position_one(monkeypatch):
         }
     ]
 
-    def fake_chat(text, prompt, model):
-        nonlocal captured_prompt
-        captured_prompt = text
-        return SelectionRequest(
-            selections=[
-                ProductSelection(
-                    option_id="producto-1-opcion-1",
-                    sale_quantity=1,
-                )
-            ],
-            needs_clarification=False,
-            clarification_question=None,
-        )
+    def fail_if_called(*args, **kwargs):
+        raise AssertionError("Las selecciones numéricas no usan el LLM")
 
-    monkeypatch.setattr(selection, "_structured_chat", fake_chat)
-
+    monkeypatch.setattr(selection, "_structured_chat", fail_if_called)
     parsed = interpretar_seleccion(
         "1",
         opciones,
     )
 
     assert parsed.selections[0].sale_quantity == 1
-    assert "opción" in captured_prompt
-    assert "posición 1" in captured_prompt
 
 
 def test_basket_accumulates_two_selections():

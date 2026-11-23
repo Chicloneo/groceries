@@ -5,6 +5,8 @@ from proyecto_2.compras.contracts import (
 )
 from proyecto_2.compras import graph
 from proyecto_2 import groq
+from proyecto_2.compras.graph import generar_respuesta
+from proyecto_2.compras.selection import buscar_opcion_por_numero
 
 
 def make_request():
@@ -60,6 +62,45 @@ def test_simple_graph_template(monkeypatch):
 
     assert "Leche semidesnatada" in result["respuesta_final"]
     assert "1.05 €" in result["respuesta_final"]
+
+
+def test_search_response_is_rendered_as_numbered_list():
+    respuesta = generar_respuesta([
+        {
+            "request_product": {"original_text": "arroz integral"},
+            "status": "options",
+            "notice": None,
+            "options": [
+                {
+                    "product": {
+                        "nombre": "Arroz integral",
+                        "formato": "Paquete 1 kg",
+                        "precio": 1.65,
+                    }
+                },
+                {
+                    "product": {
+                        "nombre": "Arroz integral largo",
+                        "formato": "Paquete 1 kg",
+                        "precio": 1.95,
+                    }
+                },
+            ],
+        }
+    ])
+
+    assert "1. Arroz integral" in respuesta
+    assert "2. Arroz integral largo" in respuesta
+
+
+def test_frontend_selects_option_by_number():
+    opciones = [
+        {"product": {"nombre": "Primera"}},
+        {"product": {"nombre": "Segunda"}},
+    ]
+
+    assert buscar_opcion_por_numero("2", opciones) == opciones[1]
+    assert buscar_opcion_por_numero("texto", opciones) is None
 
 
 def test_groq_client_returns_pydantic_payload(monkeypatch):

@@ -49,10 +49,11 @@ def generar_respuesta(productos: list[dict[str, Any]]) -> str:
         else:
             if resultado.get("notice"):
                 lines.append(resultado["notice"])
+            lines.append("Opciones:")
             for position, opcion in enumerate(resultado["options"], start=1):
                 producto = opcion["product"]
                 lines.append(
-                    f"Opción {position}: {producto['nombre']} | "
+                    f"{position}. {producto['nombre']} | "
                     f"{producto['formato']} | {producto['precio']:.2f} €"
                 )
     return "\n".join(lines)

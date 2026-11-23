@@ -4,6 +4,7 @@ from proyecto_2.clasificador.taxonomia import (
     cargar_mapa_categoria_subcategoria,
 )
 from proyecto_2.compras.graph import app
+from proyecto_2.compras.selection import buscar_opcion_por_numero
 
 
 st.set_page_config(
@@ -123,6 +124,8 @@ EJEMPLOS = [
 if "mensajes" not in st.session_state:
     st.session_state.mensajes = []
     st.session_state.pendiente = None
+    st.session_state.opciones_pendientes = []
+    st.session_state.seleccion_actual = None
 
 with st.sidebar:
     st.markdown("### Prueba con...")
@@ -133,6 +136,8 @@ with st.sidebar:
     if st.button("Nueva conversación", use_container_width=True):
         st.session_state.mensajes = []
         st.session_state.pendiente = None
+        st.session_state.opciones_pendientes = []
+        st.session_state.seleccion_actual = None
         st.rerun()
 
 st.title("🛒 Asistente de compra")
@@ -177,7 +182,12 @@ for mensaje in st.session_state.mensajes:
     ):
         st.markdown(mensaje["content"])
 
-texto = None
+texto = st.chat_input(
+    "Elige una opción por su número"
+    if st.session_state.opciones_pendientes
+    else "¿Qué quieres comprar?"
+)
+
 if buscar:
     partes = []
     if categoria:
@@ -199,6 +209,37 @@ if texto:
         st.markdown(texto)
 
     with st.chat_message("assistant", avatar="🛒"):
+        if st.session_state.opciones_pendientes:
+            opcion = buscar_opcion_por_numero(
+                texto,
+                st.session_state.opciones_pendientes,
+            )
+            if opcion is not None:
+                st.session_state.seleccion_actual = opcion
+                producto = opcion["product"]
+                respuesta = (
+                    f"Has seleccionado **{producto['nombre']}** | "
+                    f"{producto['formato']} | "
+                    f"{producto['precio']:.2f} €"
+                )
+                st.markdown(respuesta)
+                st.session_state.mensajes.append({
+                    "role": "assistant",
+                    "content": respuesta,
+                })
+                st.session_state.opciones_pendientes = []
+                st.stop()
+
+            respuesta = (
+                "Escribe el número de una opción mostrada."
+            )
+            st.markdown(respuesta)
+            st.session_state.mensajes.append({
+                "role": "assistant",
+                "content": respuesta,
+            })
+            st.stop()
+
         with st.spinner("Buscando opciones..."):
             try:
                 resultado = app.invoke({
@@ -211,6 +252,14 @@ if texto:
                     "role": "assistant",
                     "content": respuesta,
                 })
+
+                opciones = []
+                for resultado_busqueda in resultado.get(
+                    "productos_encontrados", []
+                ):
+                    opciones.extend(resultado_busqueda.get("options", []))
+                st.session_state.opciones_pendientes = opciones
+                st.session_state.seleccion_actual = None
             except Exception as error:
                 st.error(f"No pude procesar la petición: {error}")
                 st.session_state.mensajes.pop()

@@ -7,7 +7,6 @@ from proyecto_2.compras.graph import app
 from proyecto_2.compras.selection import (
     interpretar_seleccion,
     sumar_cesta,
-    intentar_seleccion_determinista,
 )
 
 
@@ -252,16 +251,11 @@ if texto:
             seleccion = st.session_state.seleccion_cache.get(clave_seleccion)
 
             if seleccion is None:
-                seleccion = intentar_seleccion_determinista(
-                    texto,
-                    st.session_state.opciones_pendientes,
-                )
-                if seleccion is None:
-                    with st.spinner("Interpretando tu selección..."):
-                        seleccion = interpretar_seleccion(
-                            texto,
-                            st.session_state.opciones_pendientes,
-                        )
+                with st.spinner("Interpretando tu selección..."):
+                    seleccion = interpretar_seleccion(
+                        texto,
+                        st.session_state.opciones_pendientes,
+                    )
                 st.session_state.seleccion_cache[clave_seleccion] = seleccion
 
             if seleccion.needs_clarification:

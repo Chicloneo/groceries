@@ -1,51 +1,67 @@
-from typing import TypedDict
+from typing import Any, TypedDict
+
 from langgraph.graph import StateGraph, START, END
 
+from proyecto_2.catalog_search import search
+from proyecto_2.contracts import ShoppingRequest
 
-def interpretar_con_llm():
-    #TODO
-    pass
-def buscar_en_base_de_datos():
-    #TODO
-    pass
-def generar_respuesta():
-    #TODO
-    pass
+from .llm_groq import extraer_peticion
 
-# Estado compartido: los datos que viajan entre pasos
-class Estado(TypedDict):
+
+class Estado(TypedDict, total=False):
     peticion_usuario: str
-    productos_entendidos: dict
-    productos_encontrados: list
+    codigo_postal: str | None
+    peticion_estructurada: ShoppingRequest
+    productos_encontrados: list[dict[str, Any]]
     respuesta_final: str
 
-# PASO 1: entender lo que pide el usuario
+
 def entender_peticion(estado: Estado) -> dict:
-    texto = estado["peticion_usuario"]
+    peticion = extraer_peticion(
+        estado["peticion_usuario"],
+        cp=estado.get("codigo_postal"),
+    )
+    return {
+        "peticion_estructurada": peticion,
+        "codigo_postal": peticion.cp,
+    }
 
-    # Aquí irá tu LLM con salida JSON estructurada.
-    # Por ahora, versión abstracta:
-    productos_entendidos = interpretar_con_llm(texto)
 
-    return {"productos_entendidos": productos_entendidos}
-
-# PASO 2: buscar en tu base de datos
 def buscar_productos(estado: Estado) -> dict:
-    productos_entendidos = estado["productos_entendidos"]
+    encontrados = search(estado["peticion_estructurada"])
+    return {"productos_encontrados": encontrados}
 
-    # Aquí irá SQLite, no un LLM.
-    productos_encontrados = buscar_en_base_de_datos(productos_entendidos)
 
-    return {"productos_encontrados": productos_encontrados}
+def generar_respuesta(productos: list[dict[str, Any]]) -> str:
+    if not productos:
+        return "No encontré productos concretos en tu petición."
 
-# PASO 3: generar la respuesta para el usuario
+    lines: list[str] = []
+    for resultado in productos:
+        pedido = resultado["request_product"]
+        lines.append(f"Producto pedido: {pedido['original_text']}")
+
+        if resultado["status"] == "needs_postal_code":
+            lines.append(resultado["clarification_question"])
+        elif resultado["status"] == "needs_clarification":
+            lines.append(resultado["clarification_question"])
+        elif resultado["status"] == "no_matches":
+            lines.append("No encontré coincidencias en el catálogo.")
+        else:
+            if resultado.get("notice"):
+                lines.append(resultado["notice"])
+            for position, opcion in enumerate(resultado["options"], start=1):
+                producto = opcion["product"]
+                lines.append(
+                    f"Opción {position}: {producto['nombre']} | "
+                    f"{producto['formato']} | {producto['precio']:.2f} €"
+                )
+    return "\n".join(lines)
+
+
 def responder_usuario(estado: Estado) -> dict:
-    productos = estado["productos_encontrados"]
-
-    # Aquí puede ir otro LLM, o incluso texto plantilla.
-    respuesta_final = generar_respuesta(productos)
-
-    return {"respuesta_final": respuesta_final}
+    respuesta = generar_respuesta(estado["productos_encontrados"])
+    return {"respuesta_final": respuesta}
 
 # Construcción del grafo
 graph = StateGraph(Estado)
@@ -60,10 +76,3 @@ graph.add_edge("buscar_productos", "responder_usuario")
 graph.add_edge("responder_usuario", END)
 
 app = graph.compile()
-
-# Ejemplo de uso
-resultado = app.invoke({
-    "peticion_usuario": "Quiero leche deslactosada y dos paquetes de arroz"
-})
-
-print(resultado["respuesta_final"])

@@ -11,3 +11,11 @@ Paso A: interpretar con LLM
 Paso B: buscar con Python
 
 Paso C: responder con plantilla
+
+La implementación actual usa Groq solo en el primer nodo para estructurar la
+petición. Python busca en el CSV y genera la respuesta con una plantilla.
+
+```bash
+uv run --env-file .env proyecto-2-grafo \
+  "Necesito leche semidesnatada Hacendado 1 litro"
+```

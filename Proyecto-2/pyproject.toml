@@ -21,6 +21,7 @@ dependencies = [
 [project.scripts]
 proyecto-2 = "proyecto_2.cli:main"
 proyecto-2-compra = "proyecto_2.shopping_cli:main"
+proyecto-2-grafo = "proyecto_2.grafo.main:main"
 
 [build-system]
 requires = ["uv_build>=0.13.7,<0.14.0"]

@@ -1,12 +1,21 @@
+from decimal import Decimal
+
 from proyecto_2.compras.contracts import (
     Producto,
+    ProductSelection,
     ShoppingRequest,
+    SelectionRequest,
     _ShoppingRequestPayload,
 )
 from proyecto_2.compras import graph
 from proyecto_2 import groq
 from proyecto_2.compras.graph import generar_respuesta
 from proyecto_2.compras.selection import buscar_opcion_por_numero
+from proyecto_2.compras.selection import (
+    interpretar_seleccion,
+    sumar_cesta,
+)
+from proyecto_2.compras import selection
 from proyecto_2.clasificador.taxonomia import cargar_mapa_categoria_subcategoria
 
 
@@ -165,3 +174,55 @@ def test_groq_normalizes_singular_product_payload():
         normalized["products"][0]["original_text"]
         == "Leche semidesnatada Hacendado 1 litro"
     )
+
+
+def test_selection_uses_groq_and_python_sums_catalog_price(monkeypatch):
+    opciones = [
+        {
+            "option_id": "producto-1-opcion-1",
+            "product": {
+                "nombre": "Pizza carbonara",
+                "formato": "430 g",
+                "precio": 2.90,
+            },
+        },
+        {
+            "option_id": "producto-1-opcion-2",
+            "product": {
+                "nombre": "Pizza carbonara familiar",
+                "formato": "600 g",
+                "precio": 3.40,
+            },
+        },
+    ]
+
+    monkeypatch.setattr(
+        selection,
+        "_structured_chat",
+        lambda text, prompt, model: SelectionRequest(
+            selections=[
+                ProductSelection(
+                    option_id="producto-1-opcion-2",
+                    sale_quantity=2,
+                )
+            ],
+            needs_clarification=False,
+            clarification_question=None,
+        ),
+    )
+
+    parsed = interpretar_seleccion(
+        "dos de la opción 2",
+        opciones,
+    )
+
+    cesta = {
+        parsed.selections[0].option_id: parsed.selections[0].sale_quantity,
+    }
+    total = sumar_cesta(
+        cesta,
+        {opcion["option_id"]: opcion for opcion in opciones},
+    )
+
+    assert parsed.selections[0].sale_quantity == 2
+    assert total.quantize(Decimal("0.01")) == Decimal("6.80")

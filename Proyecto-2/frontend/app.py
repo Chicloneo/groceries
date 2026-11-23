@@ -4,7 +4,10 @@ from proyecto_2.clasificador.taxonomia import (
     cargar_mapa_categoria_subcategoria,
 )
 from proyecto_2.compras.graph import app
-from proyecto_2.compras.selection import buscar_opcion_por_numero
+from proyecto_2.compras.selection import (
+    interpretar_seleccion,
+    sumar_cesta,
+)
 
 
 st.set_page_config(
@@ -128,6 +131,8 @@ if "mensajes" not in st.session_state:
     st.session_state.seleccion_actual = None
     st.session_state.categoria_seleccionada = None
     st.session_state.subcategoria_seleccionada = None
+    st.session_state.cesta = {}
+    st.session_state.opciones_por_id = {}
 
 with st.sidebar:
     st.markdown("### Prueba con...")
@@ -136,6 +141,8 @@ with st.sidebar:
             st.session_state.pendiente = ejemplo
             st.session_state.categoria_seleccionada = None
             st.session_state.subcategoria_seleccionada = None
+            st.session_state.cesta = {}
+            st.session_state.opciones_por_id = {}
     st.markdown("---")
     if st.button("Nueva conversación", use_container_width=True):
         st.session_state.mensajes = []
@@ -144,7 +151,26 @@ with st.sidebar:
         st.session_state.seleccion_actual = None
         st.session_state.categoria_seleccionada = None
         st.session_state.subcategoria_seleccionada = None
+        st.session_state.cesta = {}
+        st.session_state.opciones_por_id = {}
         st.rerun()
+
+    if st.session_state.cesta:
+        st.markdown("---")
+        st.markdown("### Cesta")
+        for option_id, cantidad in st.session_state.cesta.items():
+            opcion = st.session_state.opciones_por_id[option_id]
+            producto = opcion["product"]
+            st.markdown(
+                f"- {cantidad} × {producto['nombre']} "
+                f"({producto['formato']}): "
+                f"{producto['precio'] * cantidad:.2f} €"
+            )
+        total = sumar_cesta(
+            st.session_state.cesta,
+            st.session_state.opciones_por_id,
+        )
+        st.markdown(f"**Total: {total:.2f} €**")
 
 st.title("🛒 Asistente de compra")
 st.caption("Busca productos reales en el catálogo de Mercadona")
@@ -213,36 +239,66 @@ if texto:
 
     with st.chat_message("assistant", avatar="🛒"):
         if st.session_state.opciones_pendientes:
-            opcion = buscar_opcion_por_numero(
-                texto,
-                st.session_state.opciones_pendientes,
-            )
-            if opcion is not None:
-                st.session_state.seleccion_actual = opcion
-                producto = opcion["product"]
+            with st.spinner("Interpretando tu selección..."):
+                seleccion = interpretar_seleccion(
+                    texto,
+                    st.session_state.opciones_pendientes,
+                )
+
+            if seleccion.needs_clarification:
                 respuesta = (
-                    f"Has seleccionado **{producto['nombre']}** | "
-                    f"{producto['formato']} | "
-                    f"{producto['precio']:.2f} €"
+                    seleccion.clarification_question
+                    or "¿Qué opción quieres y cuántas unidades?"
                 )
                 st.markdown(respuesta)
                 st.session_state.mensajes.append({
                     "role": "assistant",
                     "content": respuesta,
                 })
-                st.session_state.opciones_pendientes = []
-                st.session_state.categoria_seleccionada = None
-                st.session_state.subcategoria_seleccionada = None
                 st.stop()
 
-            respuesta = (
-                "Escribe el número de una opción mostrada."
+            opciones_por_id = {
+                opcion["option_id"]: opcion
+                for opcion in st.session_state.opciones_pendientes
+            }
+            for linea in seleccion.selections:
+                opcion = opciones_por_id[linea.option_id]
+                producto = opcion["product"]
+                cantidad = linea.sale_quantity
+                cesta = st.session_state.cesta
+                cesta[linea.option_id] = (
+                    cesta.get(linea.option_id, 0) + cantidad
+                )
+                st.session_state.cesta = cesta
+                st.session_state.opciones_por_id[linea.option_id] = opcion
+
+            total = sumar_cesta(
+                st.session_state.cesta,
+                st.session_state.opciones_por_id,
             )
+            lineas = []
+            for linea in seleccion.selections:
+                opcion = opciones_por_id[linea.option_id]
+                producto = opcion["product"]
+                subtotal = (
+                    float(producto["precio"]) * linea.sale_quantity
+                )
+                lineas.append(
+                    f"- {linea.sale_quantity} × {producto['nombre']} "
+                    f"({producto['formato']}) | "
+                    f"{producto['precio']:.2f} €/unidad | "
+                    f"{subtotal:.2f} €"
+                )
+            respuesta = "\n".join(lineas)
+            respuesta += f"\n\n**Total cesta: {total:.2f} €**"
             st.markdown(respuesta)
             st.session_state.mensajes.append({
                 "role": "assistant",
                 "content": respuesta,
             })
+            st.session_state.opciones_pendientes = []
+            st.session_state.categoria_seleccionada = None
+            st.session_state.subcategoria_seleccionada = None
             st.stop()
 
         with st.spinner("Buscando opciones..."):

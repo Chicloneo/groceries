@@ -7,6 +7,7 @@ from proyecto_2.compras.graph import app
 from proyecto_2.compras.selection import (
     interpretar_seleccion,
     sumar_cesta,
+    intentar_seleccion_determinista,
 )
 
 
@@ -133,6 +134,8 @@ if "mensajes" not in st.session_state:
     st.session_state.subcategoria_seleccionada = None
     st.session_state.cesta = {}
     st.session_state.opciones_por_id = {}
+    st.session_state.seleccion_cache = {}
+    st.session_state.seleccion_cache = {}
 
 with st.sidebar:
     st.markdown("### Prueba con...")
@@ -143,6 +146,7 @@ with st.sidebar:
             st.session_state.subcategoria_seleccionada = None
             st.session_state.cesta = {}
             st.session_state.opciones_por_id = {}
+            st.session_state.seleccion_cache = {}
     st.markdown("---")
     if st.button("Nueva conversación", use_container_width=True):
         st.session_state.mensajes = []
@@ -153,6 +157,7 @@ with st.sidebar:
         st.session_state.subcategoria_seleccionada = None
         st.session_state.cesta = {}
         st.session_state.opciones_por_id = {}
+        st.session_state.seleccion_cache = {}
         st.rerun()
 
     if st.session_state.cesta:
@@ -239,11 +244,25 @@ if texto:
 
     with st.chat_message("assistant", avatar="🛒"):
         if st.session_state.opciones_pendientes:
-            with st.spinner("Interpretando tu selección..."):
-                seleccion = interpretar_seleccion(
+            ids_opciones = tuple(
+                opcion["option_id"]
+                for opcion in st.session_state.opciones_pendientes
+            )
+            clave_seleccion = (texto.strip().casefold(), ids_opciones)
+            seleccion = st.session_state.seleccion_cache.get(clave_seleccion)
+
+            if seleccion is None:
+                seleccion = intentar_seleccion_determinista(
                     texto,
                     st.session_state.opciones_pendientes,
                 )
+                if seleccion is None:
+                    with st.spinner("Interpretando tu selección..."):
+                        seleccion = interpretar_seleccion(
+                            texto,
+                            st.session_state.opciones_pendientes,
+                        )
+                st.session_state.seleccion_cache[clave_seleccion] = seleccion
 
             if seleccion.needs_clarification:
                 respuesta = (

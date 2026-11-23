@@ -14,6 +14,7 @@ from proyecto_2.compras.selection import buscar_opcion_por_numero
 from proyecto_2.compras.selection import (
     interpretar_seleccion,
     sumar_cesta,
+    intentar_seleccion_determinista,
 )
 from proyecto_2.compras import selection
 from proyecto_2.clasificador.taxonomia import cargar_mapa_categoria_subcategoria
@@ -111,6 +112,33 @@ def test_frontend_selects_option_by_number():
 
     assert buscar_opcion_por_numero("2", opciones) == opciones[1]
     assert buscar_opcion_por_numero("texto", opciones) is None
+
+
+def test_deterministic_selection_handles_numbers_and_quantities():
+    opciones = [
+        {"option_id": "producto-1-opcion-1", "product": {}},
+        {"option_id": "producto-1-opcion-2", "product": {}},
+        {"option_id": "producto-1-opcion-3", "product": {}},
+        {"option_id": "producto-1-opcion-4", "product": {}},
+    ]
+
+    simple = intentar_seleccion_determinista("3", opciones)
+    multiple = intentar_seleccion_determinista(
+        "dos de la 3 y una de la 4",
+        opciones,
+    )
+
+    assert simple is not None
+    assert simple.selections[0].option_id == "producto-1-opcion-3"
+    assert simple.selections[0].sale_quantity == 1
+    assert multiple is not None
+    assert [
+        (line.option_id, line.sale_quantity)
+        for line in multiple.selections
+    ] == [
+        ("producto-1-opcion-3", 2),
+        ("producto-1-opcion-4", 1),
+    ]
 
 
 def test_taxonomy_contains_all_processed_categories():

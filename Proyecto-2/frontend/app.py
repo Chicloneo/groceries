@@ -197,12 +197,12 @@ with col_subcategoria:
         index=0,
     )
 
-producto = st.text_input(
-    "Producto concreto",
-    placeholder="Ej.: leche semidesnatada Hacendado 1 litro",
-)
-
-buscar = st.button("Buscar", use_container_width=True)
+with st.form("busqueda_producto", clear_on_submit=False):
+    producto = st.text_input(
+        "Producto concreto",
+        placeholder="Ej.: leche semidesnatada Hacendado 1 litro",
+    )
+    buscar = st.form_submit_button("Buscar", use_container_width=True)
 
 if not st.session_state.mensajes:
     st.info("Elige categoría y subcategoría si quieres acotar la búsqueda.")

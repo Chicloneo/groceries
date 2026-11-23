@@ -40,6 +40,15 @@ El grafo tiene tres pasos:
 Por ahora, `comprar` devuelve las opciones encontradas y no conserva selección
 ni calcula un ticket completo.
 
+## Abrir el frontend
+
+```bash
+uv run --env-file .env streamlit run frontend/app.py
+```
+
+El frontend llama directamente al grafo de LangGraph. No crea un servidor API
+ni realiza solicitudes HTTP al backend.
+
 ## Clasificador
 
 ```bash

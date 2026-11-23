@@ -5,12 +5,21 @@ import pandas as pd
 
 
 PROJECT_DIR = Path(__file__).resolve().parents[3]
-CATALOG_PATH = PROJECT_DIR.parent / "Proyecto-1" / "catalogo_mercadona.csv"
+CATALOG_PATH = (
+    PROJECT_DIR.parent
+    / "Data"
+    / "Clean"
+    / "preprocesado_1_madrid_centro.csv"
+)
 
 
 @lru_cache(maxsize=1)
 def cargar_mapa_categoria_subcategoria() -> dict[str, list[str]]:
-    frame = pd.read_csv(CATALOG_PATH)
+    frame = pd.read_csv(
+        CATALOG_PATH,
+        sep=";",
+        encoding="utf-8-sig",
+    )
     mapa: dict[str, set[str]] = {}
 
     for category, subcategory in frame[

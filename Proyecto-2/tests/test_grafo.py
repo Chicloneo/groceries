@@ -7,6 +7,7 @@ from proyecto_2.compras import graph
 from proyecto_2 import groq
 from proyecto_2.compras.graph import generar_respuesta
 from proyecto_2.compras.selection import buscar_opcion_por_numero
+from proyecto_2.clasificador.taxonomia import cargar_mapa_categoria_subcategoria
 
 
 def make_request():
@@ -101,6 +102,16 @@ def test_frontend_selects_option_by_number():
 
     assert buscar_opcion_por_numero("2", opciones) == opciones[1]
     assert buscar_opcion_por_numero("texto", opciones) is None
+
+
+def test_taxonomy_contains_all_processed_categories():
+    mapa = cargar_mapa_categoria_subcategoria()
+
+    assert len(mapa) == 24
+    assert "Huevos, leche y mantequilla" in mapa
+    assert "Leche y bebidas vegetales" in mapa[
+        "Huevos, leche y mantequilla"
+    ]
 
 
 def test_groq_client_returns_pydantic_payload(monkeypatch):

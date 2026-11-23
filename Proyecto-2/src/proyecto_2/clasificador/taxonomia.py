@@ -5,29 +5,27 @@ import pandas as pd
 
 
 PROJECT_DIR = Path(__file__).resolve().parents[3]
-CATALOG_PATH = (
-    PROJECT_DIR.parent
-    / "Data"
-    / "Clean"
-    / "preprocesado_1_madrid_centro.csv"
-)
+CATALOG_PATH = PROJECT_DIR.parent / "Data" / "Clean" / "preprocesado_1_madrid_centro.csv"
 
 
+# Guarda una vez el mapa calculado para no releer y procesar el CSV en cada llamada.
 @lru_cache(maxsize=1)
 def cargar_mapa_categoria_subcategoria() -> dict[str, list[str]]:
-    frame = pd.read_csv(
-        CATALOG_PATH,
-        sep=";",
-        encoding="utf-8-sig",
-    )
-    mapa: dict[str, set[str]] = {}
+    """Lee el catálogo y crea el mapa categoría -> subcategorías."""
+    frame = pd.read_csv(CATALOG_PATH, sep=";", encoding="utf-8-sig")
 
-    for category, subcategory in frame[
-        ["categoria", "subcategoria"]
-    ].dropna().drop_duplicates().itertuples(index=False, name=None):
-        mapa.setdefault(str(category), set()).add(str(subcategory))
+    category_subcategories = {} # es de tipo dict[str, set[str]]
 
-    return {
-        category: sorted(subcategories)
-        for category, subcategories in sorted(mapa.items())
-    }
+    relationships = frame[["categoria", "subcategoria"]].dropna().drop_duplicates()
+
+    for category, subcategory in relationships.itertuples(index=False, name=None):
+        category = str(category)
+        subcategory = str(subcategory)
+        category_subcategories.setdefault(category, set()).add(subcategory)
+
+    mapa = {}
+    for category in sorted(category_subcategories):
+        subcategories = sorted(category_subcategories[category])
+        mapa[category] = subcategories
+
+    return mapa

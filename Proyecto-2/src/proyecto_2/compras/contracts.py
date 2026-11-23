@@ -1,5 +1,3 @@
-"""Modelos Pydantic y contratos de datos del pipeline LLM."""
-
 from __future__ import annotations
 
 import math
@@ -9,9 +7,6 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from ..clasificador.categorias import CATEGORIAS, SUBCATEGORIAS
 
-# --------------------------------------------------------------------------
-# Esquemas Pydantic
-# --------------------------------------------------------------------------
 # Dejamos los campos requeridos en el JSON incluso cuando aceptan null. Así el
 # modelo debe declarar qué información no pudo extraer, en vez de omitirla.
 

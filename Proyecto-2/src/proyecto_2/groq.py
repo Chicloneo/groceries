@@ -1,5 +1,3 @@
-"""Conexión estructurada a Groq y reintentos comunes."""
-
 from __future__ import annotations
 
 import logging

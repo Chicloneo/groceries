@@ -8,6 +8,11 @@ from .interpreter import parse_request
 
 
 class Estado(TypedDict, total=False):
+
+    # Memoria compartida del grafo: guarda la entrada, las selecciones previas
+    # y los resultados parciales mientras ejecuta entender, buscar y responder.
+    # Se crea al invocar app desde el frontend o el resto de entradas del proyecto.
+
     peticion_usuario: str
     codigo_postal: str | None
     categoria_seleccionada: str | None
@@ -18,12 +23,11 @@ class Estado(TypedDict, total=False):
 
 
 def entender_peticion(estado: Estado) -> dict:
-    peticion = parse_request(
-        estado["peticion_usuario"],
-        cp=estado.get("codigo_postal"),
-    )
+
+    peticion = parse_request(estado["peticion_usuario"], cp=estado.get("codigo_postal"))
     categoria = estado.get("categoria_seleccionada")
     subcategoria = estado.get("subcategoria_seleccionada")
+
     if categoria or subcategoria:
         productos = []
         for producto in peticion.products:
@@ -32,6 +36,7 @@ def entender_peticion(estado: Estado) -> dict:
             values["subcategoria"] = subcategoria
             productos.append(type(producto).model_validate(values))
         peticion = peticion.model_copy(update={"products": productos})
+        
     return {
         "peticion_estructurada": peticion,
         "codigo_postal": peticion.cp,

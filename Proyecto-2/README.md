@@ -56,14 +56,6 @@ Si una búsqueda devuelve demasiadas opciones o no encuentra coincidencias,
 Streamlit muestra una aclaración o un aviso. Cambia la petición o las
 categorías seleccionadas para probar otro caso.
 
-## Clasificador
-
-```bash
-uv run proyecto-2 clasificar --name "Leche de avena sin azúcar 1 L"
-```
-
-El modelo se guarda automáticamente en `models/clasificador_productos.joblib`.
-
 ## Código principal
 
 ```text

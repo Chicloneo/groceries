@@ -1,7 +1,7 @@
 [project]
 name = "proyecto-2"
 version = "0.1.0"
-description = "Clasificación de categorías para nuevos productos, ampliando Proyecto 1"
+description = "Clasificación y búsqueda de productos de compra"
 readme = "README.md"
 authors = [
     { name = "Santiago Lillo Macías", email = "santilillomacias@gmail.com" }

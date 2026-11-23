@@ -70,13 +70,9 @@ def _call_with_retries(fn: Callable[[], ResponseT]) -> ResponseT:
                 exc,
             )
         except Exception as exc:
-            if getattr(exc, "status_code", None) in {
-                429,
-                500,
-                502,
-                503,
-                504,
-            } or isinstance(exc, TimeoutError):
+            if _status(exc) in {429, 500, 502, 503, 504} or isinstance(
+                exc, TimeoutError
+            ):
                 last = exc
                 log.warning(
                     "Error temporal de Groq (intento %d/%d): %s",

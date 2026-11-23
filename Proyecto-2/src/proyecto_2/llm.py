@@ -1,9 +1,4 @@
-"""Interfaz pública del pipeline de lenguaje natural.
-
-La implementación se divide por responsabilidad: modelos, prompts, cliente de
-Groq, extracción de pedidos e interpretación de selecciones. Este módulo
-conserva los imports y el comando CLI existentes.
-"""
+"""Interfaz pública del pipeline de lenguaje natural."""
 
 import logging
 import sys
@@ -23,8 +18,6 @@ __all__ = [
 ]
 
 if __name__ == "__main__":
-    import sys
-
     logging.basicConfig(level=logging.INFO)
     queries = sys.argv[1:] or [
         "Necesito comprar 6 L de leche semidesnatada y carne picada",

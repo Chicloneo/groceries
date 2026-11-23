@@ -266,3 +266,21 @@ def test_numeric_selection_prompt_marks_position_one(monkeypatch):
     assert parsed.selections[0].sale_quantity == 1
     assert "opción" in captured_prompt
     assert "posición 1" in captured_prompt
+
+
+def test_basket_accumulates_two_selections():
+    opciones = {
+        "pizza-1": {
+            "product": {"nombre": "Pizza familiar", "precio": 3.40}
+        },
+        "pizza-2": {
+            "product": {"nombre": "Pizza barbacoa", "precio": 2.50}
+        },
+    }
+    cesta = {"pizza-1": 1}
+    cesta["pizza-2"] = cesta.get("pizza-2", 0) + 2
+
+    total = sumar_cesta(cesta, opciones)
+
+    assert cesta == {"pizza-1": 1, "pizza-2": 2}
+    assert total.quantize(Decimal("0.01")) == Decimal("8.40")

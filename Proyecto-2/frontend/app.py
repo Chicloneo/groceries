@@ -324,7 +324,7 @@ if texto:
             st.session_state.opciones_pendientes = []
             st.session_state.categoria_seleccionada = None
             st.session_state.subcategoria_seleccionada = None
-            st.stop()
+            st.rerun()
 
         with st.spinner("Buscando opciones..."):
             try:

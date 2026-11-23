@@ -9,7 +9,7 @@ from typing import Sequence
 
 from .classifier import ProductClassifier
 from .contracts import Producto, ShoppingRequest, _ShoppingRequestPayload, LLMError
-from .ollama_client import _call_with_retries, _ollama
+from .llm_client import _call_with_retries, _structured_chat
 from .prompts import SYSTEM_PROMPT
 
 
@@ -66,14 +66,12 @@ def _cached_parse(text: str) -> _ShoppingRequestPayload:
     """Evita repetir una extracción idéntica durante la misma ejecución."""
     try:
         raw = _call_with_retries(
-            lambda: _ollama(text, SYSTEM_PROMPT, _ShoppingRequestPayload)
+            lambda: _structured_chat(text, SYSTEM_PROMPT, _ShoppingRequestPayload)
         )
     except LLMError:
         raise
-    except ConnectionError as e:
-        raise LLMError("No se pudo conectar con Ollama. ¿Está iniciado `ollama serve`?") from e
     except Exception as e:
-        raise LLMError(f"Falló la llamada a Ollama: {e}") from e
+        raise LLMError(f"Falló la llamada a Groq: {e}") from e
     return _clean_payload(raw)
 
 

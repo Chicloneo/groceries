@@ -47,18 +47,11 @@ uv run pytest -q
 `pyproject.toml` declara las dependencias y `uv.lock` fija las versiones
 resueltas; no hay `requirements.txt`.
 
-## Probar el intérprete de listas con Ollama
+## Probar el intérprete de listas con Groq
 
-Desde `Proyecto-2/`, asegúrate de que Ollama está instalado y de que el modelo
-configurado existe localmente. Si todavía no lo has descargado:
-
-```bash
-ollama pull qwen3.5:4b
-```
-
-Deja Ollama ejecutándose. Si tu instalación no inicia el servidor
-automáticamente, arráncalo en otra terminal con `ollama serve`. Después instala
-las dependencias y prueba la extracción estructurada:
+Desde `Proyecto-2/`, configura `GROQ_API_KEY` en tu `.env` y usa opcionalmente
+`GROQ_MODEL` (por defecto `llama-3.3-70b-versatile`). Instala las dependencias
+y prueba la extracción estructurada:
 
 ```bash
 uv sync
@@ -144,8 +137,8 @@ una elección adicional y devuelve la cantidad restante.
 
 ## Probar el flujo por CLI
 
-Con Ollama ejecutándose y el modelo configurado en `.env`, desde `Proyecto-2/`
-puedes iniciar el flujo interactivo:
+Con la clave de Groq configurada en `.env`, desde `Proyecto-2/` puedes iniciar
+el flujo interactivo:
 
 ```bash
 uv run --env-file .env python -m proyecto_2.shopping_cli \

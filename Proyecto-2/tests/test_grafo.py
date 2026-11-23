@@ -1,5 +1,7 @@
 from proyecto_2.contracts import Producto, ShoppingRequest
 from proyecto_2.grafo import graph
+from proyecto_2 import llm_client
+from proyecto_2.contracts import _ShoppingRequestPayload
 
 
 def make_request():
@@ -23,7 +25,7 @@ def make_request():
 
 def test_simple_graph_template(monkeypatch):
     request = make_request()
-    monkeypatch.setattr(graph, "extraer_peticion", lambda text, cp=None: request)
+    monkeypatch.setattr(graph, "parse_request", lambda text, cp=None: request)
     monkeypatch.setattr(
         graph,
         "search",
@@ -55,3 +57,40 @@ def test_simple_graph_template(monkeypatch):
 
     assert "Leche semidesnatada" in result["respuesta_final"]
     assert "1.05 €" in result["respuesta_final"]
+
+
+def test_groq_client_returns_pydantic_payload(monkeypatch):
+    payload = {
+        "cp": "28012",
+        "products": [],
+    }
+
+    class FakeCompletions:
+        def create(self, **kwargs):
+            return type("Response", (), {
+                "choices": [
+                    type("Choice", (), {
+                        "message": type("Message", (), {
+                            "content": __import__("json").dumps(payload),
+                        })()
+                    })()
+                ]
+            })()
+
+    class FakeClient:
+        def __init__(self, **kwargs):
+            self.chat = type("Chat", (), {
+                "completions": FakeCompletions()
+            })()
+
+    monkeypatch.setenv("GROQ_API_KEY", "test")
+    monkeypatch.setattr(llm_client, "OpenAI", FakeClient)
+
+    result = llm_client._structured_chat(
+        "Nada",
+        "Devuelve JSON",
+        _ShoppingRequestPayload,
+    )
+
+    assert result.cp == "28012"
+    assert result.products == []

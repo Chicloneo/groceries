@@ -12,6 +12,10 @@ Paso B: buscar con Python
 
 Paso C: responder con plantilla
 
+Groq se integra sustituyendo al cliente LLM dentro de `request_parser.py`.
+El grafo reutiliza `parse_request()` y `catalog_search.search()` del pipeline
+existente.
+
 La implementación actual usa Groq solo en el primer nodo para estructurar la
 petición. Python busca en el CSV y genera la respuesta con una plantilla.
 

@@ -194,7 +194,7 @@ class SelectionRequest(BaseModel):
 
 
 class LLMError(Exception):
-    """Error de Ollama o de una respuesta que no cumple el contrato Pydantic."""
+    """Error del proveedor LLM o de una respuesta que no cumple Pydantic."""
 
 
 

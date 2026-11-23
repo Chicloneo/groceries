@@ -1,7 +1,7 @@
 """Interfaz pública del pipeline de lenguaje natural.
 
 La implementación se divide por responsabilidad: modelos, prompts, cliente de
-Ollama, extracción de pedidos e interpretación de selecciones. Este módulo
+Groq, extracción de pedidos e interpretación de selecciones. Este módulo
 conserva los imports y el comando CLI existentes.
 """
 

@@ -4,8 +4,7 @@ from langgraph.graph import StateGraph, START, END
 
 from proyecto_2.catalog_search import search
 from proyecto_2.contracts import ShoppingRequest
-
-from .llm_groq import extraer_peticion
+from proyecto_2.request_parser import parse_request
 
 
 class Estado(TypedDict, total=False):
@@ -17,7 +16,7 @@ class Estado(TypedDict, total=False):
 
 
 def entender_peticion(estado: Estado) -> dict:
-    peticion = extraer_peticion(
+    peticion = parse_request(
         estado["peticion_usuario"],
         cp=estado.get("codigo_postal"),
     )

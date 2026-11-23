@@ -6,7 +6,7 @@ import json
 from typing import Sequence
 
 from .contracts import ProductOption, ProductSelection, SelectionRequest, LLMError
-from .ollama_client import _call_with_retries, _ollama
+from .llm_client import _call_with_retries, _structured_chat
 from .prompts import SELECTION_SYSTEM_PROMPT
 
 def _validate_options(
@@ -69,7 +69,7 @@ def parse_selection(
     )
     try:
         result = _call_with_retries(
-            lambda: _ollama(
+            lambda: _structured_chat(
                 prompt,
                 SELECTION_SYSTEM_PROMPT,
                 SelectionRequest,
@@ -77,10 +77,8 @@ def parse_selection(
         )
     except LLMError:
         raise
-    except ConnectionError as exc:
-        raise LLMError("No se pudo conectar con Ollama. ¿Está iniciado `ollama serve`?") from exc
     except Exception as exc:
-        raise LLMError(f"Falló la interpretación de la selección: {exc}") from exc
+        raise LLMError(f"Falló la interpretación de la selección con Groq: {exc}") from exc
 
     if result.needs_clarification or not result.selections:
         return SelectionRequest(

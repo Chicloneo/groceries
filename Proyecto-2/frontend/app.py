@@ -12,15 +12,88 @@ st.set_page_config(
 st.markdown(
     """
     <style>
-    .stApp { background: #f6f5f1; }
+    :root { color-scheme: dark; }
+    html, body, .stApp {
+        background: #111827;
+        color: #f8fafc;
+    }
+    [data-testid="stHeader"] {
+        background: #111827;
+    }
+    [data-testid="stToolbar"] {
+        background: transparent;
+    }
+    [data-testid="stMain"] {
+        background: #111827;
+    }
+    [data-testid="stAppViewContainer"] {
+        background: #111827;
+    }
+    [data-testid="stAppViewContainer"] .main .block-container {
+        background: #111827;
+        color: #f8fafc;
+        max-width: 900px;
+        padding-top: 2.5rem;
+    }
+    h1, h2, h3, p, span, label, caption, small {
+        color: #f8fafc !important;
+    }
+    [data-testid="stCaptionContainer"] {
+        color: #cbd5e1 !important;
+    }
     [data-testid="stChatMessage"] {
-        background: white;
+        background: #1f2937;
+        color: #f8fafc;
         border-radius: 14px;
         padding: 12px 16px;
-        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+        border: 1px solid #374151;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.20);
     }
-    [data-testid="stSidebar"] { background: #1d1d1b; }
-    [data-testid="stSidebar"] * { color: #f2f2f2; }
+    [data-testid="stChatMessage"] * {
+        color: #f8fafc !important;
+    }
+    [data-testid="stChatInput"] {
+        background: #1f2937;
+        border: 1px solid #4b5563;
+        border-radius: 12px;
+    }
+    [data-testid="stChatInput"] textarea,
+    [data-testid="stChatInput"] input {
+        color: #f8fafc !important;
+        -webkit-text-fill-color: #f8fafc;
+        caret-color: #f8fafc;
+    }
+    [data-testid="stChatInput"] textarea::placeholder,
+    [data-testid="stChatInput"] input::placeholder {
+        color: #94a3b8 !important;
+        opacity: 1;
+    }
+    [data-testid="stAlert"] {
+        background: #1f2937;
+        color: #f8fafc;
+        border: 1px solid #374151;
+    }
+    [data-testid="stAlert"] * {
+        color: #f8fafc !important;
+    }
+    [data-testid="stSidebar"] {
+        background: #0b1120;
+        border-right: 1px solid #263244;
+    }
+    [data-testid="stSidebar"] * {
+        color: #f8fafc;
+    }
+    [data-testid="stSidebar"] .stButton button {
+        background: #1f2937;
+        color: #f8fafc;
+        border: 1px solid #4b5563;
+        border-radius: 10px;
+    }
+    [data-testid="stSidebar"] .stButton button:hover {
+        background: #374151;
+        color: #ffffff;
+        border-color: #64748b;
+    }
     </style>
     """,
     unsafe_allow_html=True,

@@ -186,3 +186,40 @@ def test_taxonomy_only_returns_all_options_without_text_filter(tmp_path):
     assert result["status"] == "options"
     assert result["match_count"] == 3
     assert len(result["options"]) == 3
+
+
+def test_name_search_normalizes_case_accents_and_spaces(tmp_path):
+    rows = [
+        make_row(
+            "Pizza carbonara FAMILIAR",
+            category="Pizzas y platos preparados",
+            subcategory="Pizzas",
+            format="600 g",
+        ),
+        make_row(
+            "Pizza de Jamón",
+            category="Pizzas y platos preparados",
+            subcategory="Pizzas",
+            format="415 g",
+        ),
+    ]
+    product = make_product(
+        pseudo_name="pizza carbonara",
+        search_terms=["pizza carbonara", "carbonara"],
+        features=[],
+        category="Pizzas y platos preparados",
+        subcategory="Pizzas",
+    )
+
+    result = search(
+        make_request(products=[product]),
+        catalog_path=write_catalog(tmp_path, rows),
+        taxonomy_only=True,
+    )[0]
+
+    assert result["status"] == "options"
+    assert result["match_count"] == 1
+    assert (
+        result["options"][0]["product"]["nombre"]
+        == "Pizza carbonara FAMILIAR"
+    )

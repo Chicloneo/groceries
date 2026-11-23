@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+import unicodedata
 from pathlib import Path
 from typing import Any
 
@@ -18,11 +19,22 @@ MAX_OPTIONS = 5
 _STOPWORDS = {"a", "al", "de", "del", "el", "la", "las", "los", "y"}
 
 
+def _normalize_text(text: str) -> str:
+    """Lowercase text and remove accents for catalog matching."""
+    normalized = unicodedata.normalize("NFKD", str(text).casefold())
+    return "".join(
+        character
+        for character in normalized
+        if not unicodedata.combining(character)
+    )
+
+
 def _tokens(text: str) -> list[str]:
     """Devuelve palabras relevantes, sin artículos ni preposiciones comunes."""
+    normalized = _normalize_text(text)
     return [
         token
-        for token in re.findall(r"\w+", text.casefold())
+        for token in re.findall(r"\w+", normalized)
         if token not in _STOPWORDS
     ]
 
@@ -33,9 +45,10 @@ def _contains_all_tokens(values: pd.Series, text: str) -> pd.Series:
     if not tokens:
         return pd.Series(False, index=values.index)
 
+    normalized_values = values.astype("string").fillna("").map(_normalize_text)
     mask = pd.Series(True, index=values.index)
     for token in tokens:
-        mask &= values.str.contains(token, case=False, regex=False, na=False)
+        mask &= normalized_values.str.contains(token, case=False, regex=False, na=False)
     return mask
 
 
@@ -175,6 +188,14 @@ def search(
             if product.subcategoria is not None:
                 taxonomy_mask &= frame["subcategoria"].eq(product.subcategoria)
             matches = frame.loc[taxonomy_mask].copy()
+
+            names = matches["nombre"].astype("string")
+            text_mask = pd.Series(False, index=matches.index)
+            for term in [product.pseudo_name, *product.search_terms]:
+                text_mask |= _contains_all_tokens(names, term)
+
+            if text_mask.any():
+                matches = matches.loc[text_mask].copy()
         else:
             matches = frame.loc[
                 _product_mask(frame, product, response.cp)

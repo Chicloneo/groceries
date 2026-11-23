@@ -1,5 +1,6 @@
 import streamlit as st
 
+from proyecto_2.clasificador.categorias import CATEGORIAS, SUBCATEGORIAS
 from proyecto_2.compras.graph import app
 
 
@@ -76,6 +77,18 @@ st.markdown(
     [data-testid="stAlert"] * {
         color: #f8fafc !important;
     }
+    [data-baseweb="select"] > div {
+        background: #1f2937 !important;
+        color: #f8fafc !important;
+        border-color: #4b5563 !important;
+    }
+    [data-baseweb="input"] > div,
+    [data-testid="stTextInput"] input {
+        background: #1f2937 !important;
+        color: #f8fafc !important;
+        -webkit-text-fill-color: #f8fafc;
+        border-color: #4b5563 !important;
+    }
     [data-testid="stSidebar"] {
         background: #0b1120;
         border-right: 1px solid #263244;
@@ -123,11 +136,29 @@ with st.sidebar:
 st.title("🛒 Asistente de compra")
 st.caption("Busca productos reales en el catálogo de Mercadona")
 
-if not st.session_state.mensajes:
-    st.info(
-        "Escribe qué quieres comprar. Puedes indicar marca, variedad,"
-        " cantidad y formato."
+col_categoria, col_subcategoria = st.columns(2)
+with col_categoria:
+    categoria = st.selectbox(
+        "Categoría",
+        [""] + CATEGORIAS,
+        index=0,
     )
+with col_subcategoria:
+    subcategoria = st.selectbox(
+        "Subcategoría",
+        [""] + SUBCATEGORIAS,
+        index=0,
+    )
+
+producto = st.text_input(
+    "Producto concreto",
+    placeholder="Ej.: leche semidesnatada Hacendado 1 litro",
+)
+
+buscar = st.button("Buscar", use_container_width=True)
+
+if not st.session_state.mensajes:
+    st.info("Elige categoría y subcategoría si quieres acotar la búsqueda.")
 
 for mensaje in st.session_state.mensajes:
     with st.chat_message(
@@ -136,7 +167,18 @@ for mensaje in st.session_state.mensajes:
     ):
         st.markdown(mensaje["content"])
 
-texto = st.chat_input("¿Qué quieres comprar?")
+texto = None
+if buscar:
+    partes = []
+    if categoria:
+        partes.append(categoria)
+    if subcategoria:
+        partes.append(subcategoria)
+    if producto.strip():
+        partes.append(producto.strip())
+    if partes:
+        texto = " ".join(partes)
+
 if st.session_state.pendiente:
     texto = st.session_state.pendiente
     st.session_state.pendiente = None

@@ -3,7 +3,7 @@
 import pandas as pd
 import pytest
 
-from proyecto_2.classifier import (
+from proyecto_2.clasificador.classifier import (
     CATEGORY_COLUMN,
     NAME_COLUMN,
     SUBCATEGORY_COLUMN,

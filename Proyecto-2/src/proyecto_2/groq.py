@@ -10,7 +10,7 @@ from typing import Callable, TypeVar
 from openai import OpenAI
 from pydantic import BaseModel, ValidationError
 
-from .contracts import LLMError
+from .compras.contracts import LLMError
 
 log = logging.getLogger(__name__)
 ResponseT = TypeVar("ResponseT", bound=BaseModel)

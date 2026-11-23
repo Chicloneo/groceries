@@ -12,7 +12,7 @@ distintas se conserva la combinación (categoría, subcategoría) más frecuente
 
 Uso rápido::
 
-    from proyecto_2.classifier import train_classifier
+    from proyecto_2.clasificador.classifier import train_classifier
 
     modelo = train_classifier()
     print(modelo.predict(["Leche de avena sin azúcar 1 L"]))
@@ -38,7 +38,7 @@ NAME_COLUMN = "nombre"
 CATEGORY_COLUMN = "categoria"
 SUBCATEGORY_COLUMN = "subcategoria"
 
-PROJECT_DIR = Path(__file__).resolve().parents[2]
+PROJECT_DIR = Path(__file__).resolve().parents[3]
 # Proyecto 2 lee el CSV creado por la extracción de Proyecto 1; no mantiene
 # una segunda copia del catálogo.
 DEFAULT_DATA_PATH = (

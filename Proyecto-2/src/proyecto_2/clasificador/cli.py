@@ -9,13 +9,12 @@ from time import perf_counter
 
 import pandas as pd
 
-from proyecto_2.classifier import (
+from .classifier import (
     DEFAULT_DATA_PATH,
     DEFAULT_MODEL_PATH,
     ProductClassifier,
     train_classifier,
 )
-from proyecto_2.mock_products import MOCK_PRODUCTS
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -138,12 +137,7 @@ def _collect_names(args: argparse.Namespace) -> list[str]:
     if args.name:
         return list(args.name)
 
-    print(
-        "No se indicaron productos: se usa la lista de ejemplo "
-        "(--name o --input-csv para clasificar los tuyos).",
-        file=sys.stderr,
-    )
-    return list(MOCK_PRODUCTS)
+    raise ValueError("Indica --name o --input-csv.")
 
 
 def _format_metrics(metrics: dict[str, float | int]) -> str:

@@ -10,7 +10,7 @@ import pandas as pd
 
 from .contracts import CatalogProduct, Producto, ProductOption, ShoppingRequest
 
-PROJECT_DIR = Path(__file__).resolve().parents[2]
+PROJECT_DIR = Path(__file__).resolve().parents[3]
 DEFAULT_CATALOG_PATH = (
     PROJECT_DIR.parent / "Data" / "Clean" / "preprocesado_1_madrid_centro.csv"
 )

@@ -2,9 +2,9 @@ from typing import Any, TypedDict
 
 from langgraph.graph import StateGraph, START, END
 
-from proyecto_2.catalog_search import search
-from proyecto_2.contracts import ShoppingRequest
-from proyecto_2.request_parser import parse_request
+from .catalog_search import search
+from .contracts import ShoppingRequest
+from .interpreter import parse_request
 
 
 class Estado(TypedDict, total=False):

@@ -1,16 +1,21 @@
-"""Extracción y normalización de una petición de compra.
-
-.classifier -> ProductClassifier -> .load() -> _load_classifier -> _clean_payload -> _cached_parse -> parse_request"""
+"""Extracción y normalización de una petición de compra."""
 
 from __future__ import annotations
 
 from functools import lru_cache
 from typing import Sequence
 
-from .classifier import ProductClassifier
+from ..clasificador.classifier import ProductClassifier
+from ..groq import _call_with_retries, _structured_chat
 from .contracts import Producto, ShoppingRequest, _ShoppingRequestPayload, LLMError
-from .llm_client import _call_with_retries, _structured_chat
-from .prompts import SYSTEM_PROMPT
+
+
+SYSTEM_PROMPT = """\
+Convierte la petición de compra en JSON conforme al esquema.
+No inventes productos, nombres oficiales, formatos, precios ni disponibilidad.
+Conserva cantidades y unidades pedidas por el usuario.
+Usa null si falta una información.
+"""
 
 
 @lru_cache(maxsize=1)

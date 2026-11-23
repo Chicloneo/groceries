@@ -2,8 +2,8 @@
 
 import pandas as pd
 
-from proyecto_2.catalog_search import search
-from proyecto_2.contracts import Producto, ShoppingRequest
+from proyecto_2.compras.catalog_search import search
+from proyecto_2.compras.contracts import Producto, ShoppingRequest
 
 CATEGORY = "Huevos, leche y mantequilla"
 SUBCATEGORY = "Leche y bebidas vegetales"

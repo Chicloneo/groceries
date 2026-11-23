@@ -1,7 +1,10 @@
-from proyecto_2.contracts import Producto, ShoppingRequest
-from proyecto_2.grafo import graph
-from proyecto_2 import llm_client
-from proyecto_2.contracts import _ShoppingRequestPayload
+from proyecto_2.compras.contracts import (
+    Producto,
+    ShoppingRequest,
+    _ShoppingRequestPayload,
+)
+from proyecto_2.compras import graph
+from proyecto_2 import groq
 
 
 def make_request():
@@ -84,9 +87,9 @@ def test_groq_client_returns_pydantic_payload(monkeypatch):
             })()
 
     monkeypatch.setenv("GROQ_API_KEY", "test")
-    monkeypatch.setattr(llm_client, "OpenAI", FakeClient)
+    monkeypatch.setattr(groq, "OpenAI", FakeClient)
 
-    result = llm_client._structured_chat(
+    result = groq._structured_chat(
         "Nada",
         "Devuelve JSON",
         _ShoppingRequestPayload,

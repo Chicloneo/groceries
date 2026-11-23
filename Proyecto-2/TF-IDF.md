@@ -136,7 +136,7 @@ La función `train_classifier` carga los datos, prepara la partición y entrena
 los modelos. Después se puede usar `predict` para clasificar nombres nuevos:
 
 ```python
-from proyecto_2.classifier import train_classifier
+from proyecto_2.clasificador.classifier import train_classifier
 
 clasificador = train_classifier()
 predicciones = clasificador.predict([

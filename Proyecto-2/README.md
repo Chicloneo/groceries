@@ -25,7 +25,7 @@ LLM_MAX_ATTEMPTS=3
 ## Ejecutar el grafo
 
 ```bash
-uv run --env-file .env proyecto-2-grafo \
+uv run --env-file .env proyecto-2 comprar \
   "Leche semidesnatada Hacendado 1 litro"
 ```
 
@@ -37,25 +37,20 @@ El grafo tiene tres pasos:
 
 ## Ejecutar el flujo interactivo completo
 
-```bash
-uv run --env-file .env proyecto-2-compra \
-  "Necesito 8 L de leche semidesnatada" --cp 28012
-```
-
-Este CLI conserva productos seleccionados, permite acumular cantidades y muestra
-el ticket final.
+Por ahora, `comprar` devuelve las opciones encontradas y no conserva selección
+ni calcula un ticket completo.
 
 ## Clasificador
 
 ```bash
-uv run proyecto-2 --name "Leche de avena sin azúcar 1 L"
+uv run proyecto-2 clasificar --name "Leche de avena sin azúcar 1 L"
 ```
 
 El modelo se guarda automáticamente en `models/clasificador_productos.joblib`.
 Para entrenarlo de nuevo:
 
 ```bash
-uv run proyecto-2 --retrain --test-size 0.2 --C 10
+uv run proyecto-2 clasificar --retrain --test-size 0.2 --C 10
 ```
 
 ## Código principal

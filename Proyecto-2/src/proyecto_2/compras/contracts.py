@@ -7,7 +7,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from .categorias import CATEGORIAS, SUBCATEGORIAS
+from ..clasificador.categorias import CATEGORIAS, SUBCATEGORIAS
 
 # --------------------------------------------------------------------------
 # Esquemas Pydantic

@@ -1,6 +1,8 @@
 import streamlit as st
 
-from proyecto_2.clasificador.categorias import CATEGORIAS, SUBCATEGORIAS
+from proyecto_2.clasificador.taxonomia import (
+    cargar_mapa_categoria_subcategoria,
+)
 from proyecto_2.compras.graph import app
 
 
@@ -137,16 +139,24 @@ st.title("🛒 Asistente de compra")
 st.caption("Busca productos reales en el catálogo de Mercadona")
 
 col_categoria, col_subcategoria = st.columns(2)
+mapa_taxonomia = cargar_mapa_categoria_subcategoria()
+
 with col_categoria:
     categoria = st.selectbox(
         "Categoría",
-        [""] + CATEGORIAS,
+        [""] + sorted(mapa_taxonomia),
         index=0,
     )
+
+subcategorias_disponibles = (
+    [""] + mapa_taxonomia[categoria]
+    if categoria
+    else [""]
+)
 with col_subcategoria:
     subcategoria = st.selectbox(
         "Subcategoría",
-        [""] + SUBCATEGORIAS,
+        subcategorias_disponibles,
         index=0,
     )
 

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import json
 import os
 import time
 from typing import Callable, TypeVar
@@ -43,7 +44,69 @@ def _structured_chat(
     content = response.choices[0].message.content
     if not content:
         raise LLMError("Groq devolvió una respuesta vacía.")
-    return response_model.model_validate_json(content)
+
+    data = json.loads(content)
+    if response_model.__name__ == "_ShoppingRequestPayload":
+        data = _normalize_shopping_payload(data)
+    return response_model.model_validate(data)
+
+
+def _normalize_shopping_payload(data: object) -> dict:
+    """Acepta la forma singular que algunos modelos devuelven."""
+    if not isinstance(data, dict):
+        return {"cp": None, "products": []}
+
+    products = data.get("products")
+    if not isinstance(products, list):
+        singular = data.get("product")
+        if isinstance(singular, dict):
+            products = [singular]
+        elif isinstance(singular, str) and singular.strip():
+            products = [{
+                "original_text": singular,
+                "pseudo_name": singular,
+            }]
+        else:
+            products = []
+
+    normalized_products = []
+    for product in products:
+        if not isinstance(product, dict):
+            continue
+
+        name = (
+            product.get("original_text")
+            or product.get("pseudo_name")
+            or product.get("product")
+            or product.get("name")
+        )
+        if not name:
+            continue
+
+        pseudo_name = product.get("pseudo_name") or name
+        search_terms = product.get("search_terms")
+        if not isinstance(search_terms, list) or not search_terms:
+            search_terms = [pseudo_name]
+
+        features = product.get("features")
+        if not isinstance(features, list):
+            features = []
+
+        normalized_products.append({
+            "original_text": str(name),
+            "pseudo_name": str(pseudo_name),
+            "search_terms": [str(term) for term in search_terms],
+            "requested_quantity": product.get("requested_quantity", product.get("quantity")),
+            "requested_unit": product.get("requested_unit", product.get("unit")),
+            "features": [str(feature) for feature in features],
+            "categoria": product.get("categoria"),
+            "subcategoria": product.get("subcategoria"),
+        })
+
+    cp = data.get("cp")
+    if not isinstance(cp, str):
+        cp = None
+    return {"cp": cp, "products": normalized_products}
 
 
 def _status(exc: Exception) -> int | None:

@@ -97,3 +97,19 @@ def test_groq_client_returns_pydantic_payload(monkeypatch):
 
     assert result.cp == "28012"
     assert result.products == []
+
+
+def test_groq_normalizes_singular_product_payload():
+    data = {
+        "cp": "28012",
+        "product": "Leche semidesnatada Hacendado 1 litro",
+    }
+
+    normalized = groq._normalize_shopping_payload(data)
+
+    assert normalized["cp"] == "28012"
+    assert len(normalized["products"]) == 1
+    assert (
+        normalized["products"][0]["original_text"]
+        == "Leche semidesnatada Hacendado 1 litro"
+    )

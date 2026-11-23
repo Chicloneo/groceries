@@ -11,10 +11,29 @@ from .contracts import Producto, ShoppingRequest, _ShoppingRequestPayload, LLMEr
 
 
 SYSTEM_PROMPT = """\
-Convierte la petición de compra en JSON conforme al esquema.
-No inventes productos, nombres oficiales, formatos, precios ni disponibilidad.
-Conserva cantidades y unidades pedidas por el usuario.
-Usa null si falta una información.
+Devuelve exactamente este JSON para una sola frase de compra:
+
+{
+  "cp": null,
+  "products": [
+    {
+      "original_text": "Leche semidesnatada Hacendado 1 litro",
+      "pseudo_name": "leche semidesnatada",
+      "search_terms": ["leche semidesnatada"],
+      "requested_quantity": 1,
+      "requested_unit": "L",
+      "features": ["Hacendado", "semidesnatada"],
+      "categoria": null,
+      "subcategoria": null
+    }
+  ]
+}
+
+Usa solo "cp" y "products" en la raíz.
+Usa solo "product" no está permitido.
+Usa requested_unit: "g", "kg", "ml", "L", "ud", "docena" o "pack".
+Usa null si falta una cantidad o unidad.
+No inventes nombres oficiales, formatos, precios, disponibilidad ni totales.
 """
 
 

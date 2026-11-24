@@ -27,7 +27,7 @@ Edita `.env` y añade tu clave:
 ```dotenv
 AI_PROVIDER=groq
 GROQ_API_KEY=tu_clave
-GROQ_MODEL=llama-3.3-70b-versatile
+GROQ_MODEL=openai/gpt-oss-20b
 LLM_MAX_ATTEMPTS=3
 ```
 

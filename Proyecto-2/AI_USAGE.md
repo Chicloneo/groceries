@@ -45,7 +45,7 @@ el modelo configurado y una salida JSON:
 response = client.chat.completions.create(
     model=os.getenv(
         "GROQ_MODEL",
-        "llama-3.3-70b-versatile",
+        "openai/gpt-oss-20b",
     ),
     messages=[
         {"role": "system", "content": system_prompt},

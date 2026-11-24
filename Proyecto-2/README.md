@@ -16,6 +16,12 @@ uv sync
 cp .env.example .env
 ```
 
+También se incluye `requirements.txt` para instalaciones con `pip`:
+
+```bash
+python -m pip install -r requirements.txt
+```
+
 Edita `.env` y añade tu clave:
 
 ```dotenv
@@ -60,6 +66,19 @@ una API externa.
 Si una búsqueda devuelve demasiadas opciones o no encuentra coincidencias,
 Streamlit muestra una aclaración o un aviso. Cambia la petición o las
 categorías seleccionadas para probar otro caso.
+
+## Continuidad hacia el Proyecto 3
+
+En el Proyecto 3 me gustaría ampliar el catálogo con productos de Carrefour,
+además de conservar los productos de Mercadona.
+
+La aplicación podría integrar las APIs de Google Maps y de la AEMET para:
+
+- Sugerir rutas entre la ubicación actual del usuario y las tiendas disponibles.
+- Tener en cuenta la distancia, el tráfico y las condiciones meteorológicas.
+- Estimar el tiempo de compra en cada establecimiento.
+- Comparar supermercados y ayudar a elegir la opción más barata y que reduzca el tiempo
+  total del trayecto y la compra.
 
 ## Modelo clasificador
 
@@ -118,3 +137,6 @@ src/proyecto_2/
 ```bash
 uv run pytest -q
 ```
+
+Las decisiones de uso de IA, proveedor, modelo y partes aceptadas están
+documentadas en [AI_USAGE.md](AI_USAGE.md).

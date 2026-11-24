@@ -1,10 +1,15 @@
 from typing import Any, TypedDict
+import logging
+import os
 
 from langgraph.graph import StateGraph, START, END
 
 from .catalog_search import search
 from .contracts import ShoppingRequest
 from .interpreter import parse_request
+
+
+log = logging.getLogger(__name__)
 
 
 class Estado(TypedDict, total=False):
@@ -83,6 +88,11 @@ def generar_respuesta(productos: list[dict[str, Any]]) -> str:
 
 def responder_usuario(estado: Estado) -> dict:
     respuesta = generar_respuesta(estado["productos_encontrados"])
+    log.info(
+        "busqueda_fin provider=%s productos=%d",
+        os.getenv("AI_PROVIDER", "groq"),
+        len(estado["productos_encontrados"]),
+    )
     return {"respuesta_final": respuesta}
 
 # Construcción del grafo

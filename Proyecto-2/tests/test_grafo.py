@@ -1,4 +1,5 @@
 from decimal import Decimal
+import logging
 
 from proyecto_2.compras.contracts import (
     Producto,
@@ -102,6 +103,19 @@ def test_search_response_is_rendered_as_numbered_list():
 
     assert "1. Arroz integral" in respuesta
     assert "2. Arroz integral largo" in respuesta
+
+
+def test_graph_logs_provider_and_product_count(monkeypatch, caplog):
+    monkeypatch.setenv("AI_PROVIDER", "mock")
+    caplog.set_level(logging.INFO)
+
+    graph.responder_usuario({
+        "productos_encontrados": [
+            {"status": "no_matches", "request_product": {"original_text": "leche"}},
+        ],
+    })
+
+    assert "busqueda_fin provider=mock productos=1" in caplog.text
 
 
 def test_frontend_selects_option_by_number():

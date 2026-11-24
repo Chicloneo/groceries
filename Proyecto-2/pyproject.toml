@@ -35,5 +35,5 @@ notebooks = [
 
 [tool.pytest.ini_options]
 markers = [
-    "integration: exercises training, prediction, and model persistence together",
+    "integration: exercises loading and inference of the saved sklearn model",
 ]

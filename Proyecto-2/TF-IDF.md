@@ -132,13 +132,14 @@ cambiar si cambia el catálogo o la partición.
 
 ## Clasificar productos nuevos
 
-La función `train_classifier` carga los datos, prepara la partición y entrena
-los modelos. Después se puede usar `predict` para clasificar nombres nuevos:
+El proyecto usa el artefacto ya entrenado
+`models/clasificador_productos.joblib`. Se carga con `ProductClassifier.load`
+y se puede usar `predict` para clasificar nombres nuevos:
 
 ```python
-from proyecto_2.clasificador.classifier import train_classifier
+from proyecto_2.clasificador.classifier import ProductClassifier
 
-clasificador = train_classifier()
+clasificador = ProductClassifier.load()
 predicciones = clasificador.predict([
     "Leche de avena sin azúcar 1 L",
     "Pintalabios mate rojo 24 h",

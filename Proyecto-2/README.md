@@ -133,6 +133,7 @@ joblib.dump({
 
 ```text
 src/proyecto_2/
+  ai_client.py       Selección del proveedor mock o Groq
   compras/
     contracts.py       Modelos Pydantic
     graph.py           Grafo LangGraph de búsqueda
@@ -141,7 +142,6 @@ src/proyecto_2/
     selection.py       Interpretación de selecciones y totales
   clasificador/
     classifier.py      Clasificador de categoría y subcategoría
-    cli.py             CLI del clasificador
 ```
 
 ## Tests

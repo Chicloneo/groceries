@@ -88,6 +88,18 @@ versionado y no se reentrena durante la ejecución de Streamlit ni en las prueba
 Los metadatos, métricas, versiones y hash del artefacto están registrados en
 `models/clasificador_productos.manifest.json`.
 
+### Métricas de evaluación
+
+El modelo se evaluó sobre `720` ejemplos reservados para prueba:
+
+| Predicción | Accuracy | Macro-F1 |
+| --- | ---: | ---: |
+| Categoría | 92.36 % | 91.22 % |
+| Subcategoría | 85.42 % | 81.13 % |
+
+La clasificación de categoría alcanza una exactitud superior a la de
+subcategoría, que contiene `134` clases y presenta un problema más fino.
+
 Si en el futuro se quieren actualizar las categorías a partir de nuevos datos,
 el reentrenamiento debe hacerse mediante un proceso externo al proyecto.
 

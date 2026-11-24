@@ -1,5 +1,7 @@
-from decimal import Decimal
 import logging
+from decimal import Decimal
+
+import pytest
 
 from proyecto_2.compras.contracts import (
     Producto,
@@ -7,6 +9,7 @@ from proyecto_2.compras.contracts import (
     ShoppingRequest,
     SelectionRequest,
     _ShoppingRequestPayload,
+    LLMError,
 )
 from proyecto_2.compras import graph
 from proyecto_2 import groq
@@ -144,9 +147,11 @@ def test_groq_client_returns_pydantic_payload(monkeypatch):
         "cp": "28012",
         "products": [],
     }
+    captured = {}
 
     class FakeCompletions:
         def create(self, **kwargs):
+            captured.update(kwargs)
             return type("Response", (), {
                 "choices": [
                     type("Choice", (), {
@@ -174,6 +179,27 @@ def test_groq_client_returns_pydantic_payload(monkeypatch):
 
     assert result.cp == "28012"
     assert result.products == []
+    assert captured["timeout"] == 20
+
+
+def test_groq_auth_error_is_not_retried(monkeypatch):
+    calls = 0
+
+    def reject_auth():
+        nonlocal calls
+        calls += 1
+        raise type(
+            "AuthenticationError",
+            (Exception,),
+            {"status_code": 401},
+        )()
+
+    monkeypatch.setenv("LLM_MAX_ATTEMPTS", "3")
+
+    with pytest.raises(LLMError, match="rechazó"):
+        groq._call_with_retries(reject_auth)
+
+    assert calls == 1
 
 
 def test_groq_normalizes_singular_product_payload():

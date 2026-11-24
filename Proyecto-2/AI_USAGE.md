@@ -53,6 +53,7 @@ response = client.chat.completions.create(
     ],
     temperature=0,
     response_format={"type": "json_object"},
+    timeout=20,
 )
 ```
 

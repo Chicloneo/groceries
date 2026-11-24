@@ -38,6 +38,7 @@ def _structured_chat(
         ],
         temperature=0,
         response_format={"type": "json_object"},
+        timeout=20,
     )
     content = response.choices[0].message.content
     if not content:
@@ -115,6 +116,13 @@ def _status(exc: Exception) -> int | None:
     return status
 
 
+def _is_timeout(exc: Exception) -> bool:
+    return isinstance(exc, TimeoutError) or exc.__class__.__name__ in {
+        "APITimeoutError",
+        "Timeout",
+    }
+
+
 def _call_with_retries(fn: Callable[[], ResponseT]) -> ResponseT:
     attempts = max(1, int(os.getenv("LLM_MAX_ATTEMPTS", "3")))
     last: Exception | None = None
@@ -131,9 +139,12 @@ def _call_with_retries(fn: Callable[[], ResponseT]) -> ResponseT:
                 exc,
             )
         except Exception as exc:
-            if _status(exc) in {429, 500, 502, 503, 504} or isinstance(
-                exc, TimeoutError
-            ):
+            status = _status(exc)
+            if status in {401, 403}:
+                raise LLMError("Groq rechazó la clave o los permisos.") from exc
+            if status == 400:
+                raise LLMError("Groq rechazó la petición enviada.") from exc
+            if status in {429, 500, 502, 503, 504} or _is_timeout(exc):
                 last = exc
                 log.warning(
                     "Error temporal de Groq (intento %d/%d): %s",
